@@ -20,7 +20,7 @@
 #SBATCH --ntasks-per-node=4
 
 # Number of node to use
-#SBATCH --nodes 1
+#SBATCH --nodes 2
 
 # Number of cpu to use
 #SBATCH --cpus-per-task=6

@@ -206,6 +206,8 @@ class BRATSLatentsDataModule(pl.LightningDataModule):
         data = np.load(self.hparams.npy_path, allow_pickle=True)
         self.latents = data[:self.hparams.n_samples]
         print('Latents shape:', self.latents.shape)
+        print('Min:', self.latents.min())
+        print('Max:', self.latents.max())
         
         self.dataset = IdentityDataset(self.latents)
     

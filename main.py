@@ -116,7 +116,7 @@ if __name__ == "__main__":
             ImageGenerationLogger(
                 autoencoder,
                 n_samples=1,
-                every_n_epochs=1,
+                every_n_epochs=50,
             )
         )
     
@@ -140,7 +140,7 @@ if __name__ == "__main__":
         logger=logger,
         strategy="ddp",
         devices=4,
-        num_nodes=1,
+        num_nodes=2,
         accelerator='gpu',
         precision=32,
         max_epochs=5000,
