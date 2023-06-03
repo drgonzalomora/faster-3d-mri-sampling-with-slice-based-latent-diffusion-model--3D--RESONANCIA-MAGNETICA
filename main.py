@@ -127,10 +127,9 @@ if __name__ == "__main__":
     callbacks.append(
         ModelCheckpoint(
             **cfg.callbacks.checkpoint,
-            filename='{}-{}-{}'.format(
+            filename='{}-{}'.format(
                 'diffusion' if cfg.target == 'diffusion-training' else 'autoencoder',
-                cfg.autoencoder.target, 
-                '{epoch:02d}'
+                cfg.autoencoder.target
             )
         )
     )
