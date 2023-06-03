@@ -75,6 +75,9 @@ class ImageGenerationLogger(pl.Callback):
                 x_hat = x_hat[::int(x_hat.shape[0] / 10), ...] # => will be of shape (10, **image_size)
                 positions = torch.arange(0, x_hat.shape[0]).to(pl_module.device, torch.long)[::int(x_hat.shape[0] / 10)]
                 
+                x_hat = x_hat.to(self.autoencoder.device, torch.float32)
+                positions = positions.to(self.autoencoder.device, torch.long)
+                
                 # decoding
                 x_hat = x_hat.type(torch.float32) # TODO: check diffusion output dtype
                 pemb = self.autoencoder.encode_position(positions)

@@ -116,7 +116,7 @@ if __name__ == "__main__":
             ImageGenerationLogger(
                 autoencoder,
                 n_samples=1,
-                every_n_epochs=50,
+                every_n_epochs=1,
             )
         )
     
@@ -139,7 +139,7 @@ if __name__ == "__main__":
     trainer = pl.Trainer(
         logger=logger,
         strategy="ddp",
-        devices=5,
+        devices=4,
         num_nodes=1,
         accelerator='gpu',
         precision=32,

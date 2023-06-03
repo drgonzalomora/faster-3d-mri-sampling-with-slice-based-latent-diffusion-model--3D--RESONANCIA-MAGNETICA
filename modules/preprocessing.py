@@ -191,7 +191,9 @@ class BRATSLatentsDataModule(pl.LightningDataModule):
             with open(os.path.join(os.path.dirname(self.hparams.npy_path), 'norm.txt'), 'w') as f:
                 f.write(str(self.min) + '\n')
                 f.write(str(self.max) + '\n')
-                
+            
+            print('Min:', self.self.latents.min())
+            print('Max:', self.self.latents.max())
             print('Saved!')
             
         else:
