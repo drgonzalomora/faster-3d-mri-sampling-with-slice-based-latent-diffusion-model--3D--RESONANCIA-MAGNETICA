@@ -28,7 +28,6 @@ class BRATSDataModule(pl.LightningDataModule):
         modalities=['t1', 't1ce', 't2', 'flair', 'seg'],
         binarize=True,
         npy_path='../data/brats_preprocessed.npy',
-        save_npy=True,
         root_path='../../common_data/RSNA_ASNR_MICCAI_BraTS2021_TrainingData_16July2021',
         batch_size=32,
         shuffle=True,
@@ -39,6 +38,7 @@ class BRATSDataModule(pl.LightningDataModule):
         
         super().__init__()
         self.num_modalities = len(modalities)
+        self.prepare_data_per_node = False
 
         # just for a faster access
         self.save_hyperparameters()
@@ -80,24 +80,23 @@ class BRATSDataModule(pl.LightningDataModule):
                 for idx_m, m in enumerate(self.hparams.modalities):
                     placeholder[idx, idx_m, :, :] = volumes[m]
 
-            self.data = placeholder
-
-            if self.hparams.save_npy:
                 print('Saving dataset as npy file...')    
                 # saving the dataset as a npy file
-                np.save(self.hparams.npy_path, self.data)
+                np.save(self.hparams.npy_path, placeholder)
                 print('Saved!')
-
-        else:
-            print('Loading dataset from npy file...')
-            self.data = np.load(self.hparams.npy_path)
-            self.data = self.data[:self.hparams.n_samples]
-            
-        # normalize the data
-        # norm [-1, 1]
+                
+            else:
+                print('Dataset already exists at {}'.format(self.hparams.npy_path))
+        
+    def setup(self, stage='fit'):
+        assert os.path.exists(self.hparams.npy_path), 'npy data file does not exist!'
+        
+        print('Loading dataset from npy file...')
+        self.data = torch.from_numpy(np.load(self.hparams.npy_path))
+        self.data = self.data[:self.hparams.n_samples]
+        
+        # normalize the data [-1, 1]
         norm = lambda data: data * 2 / data.max() - 1
-        self.data = torch.from_numpy(self.data) # convert to tensors
-
         for m in range(self.num_modalities):
             for idx in range(self.hparams.n_samples):
                 self.data[idx, m] = norm(self.data[idx, m]).type(torch.float32)
@@ -116,7 +115,6 @@ class BRATSDataModule(pl.LightningDataModule):
         print('Data shape:', self.data.shape)
         print('Slice positions shape:', self.slice_positions.shape)
         
-    def setup(self, stage='fit'):
         self.dataset = IdentityDataset(self.data, self.slice_positions)
 
     def train_dataloader(self):
@@ -144,6 +142,7 @@ class BRATSLatentsDataModule(pl.LightningDataModule):
         assert (os.path.exists(root_path) or os.path.exists(npy_path)), 'Provide at least one valid data source!'
         super().__init__()
         self.autoencoder = autoencoder
+        self.prepare_data_per_node = False # prepare_data executed only once on master node
         self.save_hyperparameters(ignore=['autoencoder'])       
         
     def prepare_data(self) -> None:
@@ -185,21 +184,27 @@ class BRATSLatentsDataModule(pl.LightningDataModule):
             self.min, self.max = self.latents.min(), self.latents.max()
             self.latents = (self.latents - self.min) * 2 / (self.max - self.min) - 1
                     
-            if self.hparams.save_npy:
-                print('Saving dataset as npy file...')
-                np.save(self.hparams.npy_path, self.latents)
-                print('Saved!')
+            print('Saving dataset as npy file... [norm.txt]')
+            np.save(self.hparams.npy_path, self.latents)
+            
+            # save the min max in a norm.txt file
+            with open(os.path.join(os.path.dirname(self.hparams.npy_path), 'norm.txt'), 'w') as f:
+                f.write(str(self.min) + '\n')
+                f.write(str(self.max) + '\n')
+                
+            print('Saved!')
             
         else:
-            print('Loading dataset from npy file...')
-            data = np.load(self.hparams.npy_path, allow_pickle=True)
-            self.latents = data[:self.hparams.n_samples]
-            
-        print('Latents shape:', self.latents.shape)
-        print('Latents min:', self.latents.min())
-        print('Latents max:', self.latents.max())
+            print('Dataset already exists at {}'.format(self.hparams.npy_path))
             
     def setup(self, stage='fit'):
+        assert os.path.exists(self.hparams.npy_path), 'npy data file does not exist!'
+        
+        print('Loading dataset from npy file...')
+        data = np.load(self.hparams.npy_path, allow_pickle=True)
+        self.latents = data[:self.hparams.n_samples]
+        print('Latents shape:', self.latents.shape)
+        
         self.dataset = IdentityDataset(self.latents)
     
     def train_dataloader(self):

@@ -8,7 +8,6 @@ data:
         - seg
         binarize: true
         npy_path: ./data/brats_preprocessed.npy
-        save_npy: true
         root_path: ../common_data/RSNA_ASNR_MICCAI_BraTS2021_TrainingData_16July2021
         batch_size: 32
         shuffle: true
@@ -18,7 +17,6 @@ data:
         n_samples: 500
         root_pat: ./data/brats_preprocessed.npy
         npy_path: ./data/brats_preprocessed_latents.npy
-        save_npy: true
         batch_size: 4
         shuffle: true
         num_workers: 6
