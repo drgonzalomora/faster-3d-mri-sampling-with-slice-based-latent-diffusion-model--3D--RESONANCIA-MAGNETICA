@@ -138,9 +138,9 @@ if __name__ == "__main__":
     # training
     trainer = pl.Trainer(
         logger=logger,
-	strategy="ddp",
-	devices=3,
-	num_nodes=1,
+        strategy="ddp",
+        devices=5,
+        num_nodes=1,
         accelerator='gpu',
         precision=32,
         max_epochs=5000,

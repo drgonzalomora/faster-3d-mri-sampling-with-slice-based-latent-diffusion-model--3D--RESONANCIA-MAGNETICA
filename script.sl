@@ -14,10 +14,10 @@
 #SBATCH --partition gpu_v100
 
 # Number of gpu to use
-#SBATCH --gres gpu:3
+#SBATCH --gres gpu:5
 
 # Number of tasks 
-#SBATCH --ntasks-per-node=3
+#SBATCH --ntasks-per-node=5
 
 # Number of node to use
 #SBATCH --nodes 1
