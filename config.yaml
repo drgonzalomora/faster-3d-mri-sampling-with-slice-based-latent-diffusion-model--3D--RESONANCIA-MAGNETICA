@@ -15,24 +15,25 @@ data:
     diffusion:
         latent_shape: [4, 32, 32]
         n_samples: 500
+        to_2d: true
         root_pat: ./data/brats_preprocessed.npy
         npy_path: ./data/brats_preprocessed_latents.npy
         batch_size: 4
         shuffle: true
         num_workers: 6
 unet:
-    image_size: [64, 32, 32]
-    dims: 3
+    image_size: [256, 256] # [64, 32, 32]
+    dims: 2
     in_channels: 4
     out_channels: 4
     model_channels: 128
     num_res_blocks: 2
-    num_heads: 32
+    num_heads: 8
     num_heads_upsample: -1
     num_head_channels: -1
-    attention_resolutions: [8]
-    channel_mult: [1, 2, 3, 4]
-    dropout: 0.05
+    attention_resolutions: [16, 8]
+    channel_mult: [1, 2, 3, 4, 4]
+    dropout: 0.01
     class_cond: false
     use_checkpoint: false
     use_scale_shift_norm: true
@@ -41,8 +42,8 @@ unet:
     conv_resample: true
     num_classes: # empty
     f_precision: 32
-    lr: 0.0001
-    weight_decay: 0.000001
+    lr: 0.000045
+    weight_decay: 0.0000001
 autoencoder:
     target: VQAutoencoder # specifies which autoencoder to use
     input_shape: [2, 128, 128] # channels, height, width

@@ -130,6 +130,7 @@ class BRATSLatentsDataModule(pl.LightningDataModule):
     def __init__(self,
         autoencoder,
         latent_shape=(1, 32, 32),
+        to_2d=True,
         root_path='./data/brats_preprocessed.npy',
         npy_path='./data/brats_preprocessed_latents.npy',
         n_samples=500,
@@ -179,6 +180,14 @@ class BRATSLatentsDataModule(pl.LightningDataModule):
                     
             # putting channels first 64x4x32x32 -> 4x64x32x32
             self.latents = self.latents.transpose(0, 2, 1, 3, 4)
+            
+            # => to 2D
+            if self.hparams.to_2d:
+                B, C, D, W, H = self.latents.shape
+                grid_w, grid_h = int(np.sqrt(D)), int(np.sqrt(D))
+                self.latents = self.latents.reshape(B, C, grid_w, grid_h, W, H)
+                batch = batch.permute(0, 1, 2, 4, 3, 5)
+                batch = batch.reshape(B, C, grid_w * W, grid_h * H)
                     
             # min-max normalization between -1 and 1
             self.min, self.max = self.latents.min(), self.latents.max()

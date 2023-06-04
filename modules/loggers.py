@@ -48,13 +48,15 @@ class ImageReconstructionLogger(pl.Callback):
 class ImageGenerationLogger(pl.Callback):
     def __init__(self,
         autoencoder,
-        n_samples=5,
+        n_samples=1,
+        to_2d=True,
         every_n_epochs=50,
         **kwargs
     ) -> None:
         super().__init__()
         self.autoencoder = autoencoder
         self.n_samples = n_samples
+        self.to_2d = to_2d
         self.every_n_epochs = every_n_epochs
         
     def on_train_epoch_end(self, trainer, pl_module):
@@ -64,13 +66,24 @@ class ImageGenerationLogger(pl.Callback):
                 pl_module.eval()
                 with torch.no_grad():
                     noise = torch.randn(
-                        1,
+                        self.n_samples,
                         pl_module.in_channels,
                         *pl_module.image_size
                     ).to(pl_module.device, torch.float32)
                     
                     # diffusion the noise
                     x_hat = pl_module.diffusion.sample(pl_module, noise, ddim=False, clamp=True, verbose=True)
+                    
+                    # grid_w, grid_h = int(np.sqrt(D)), int(np.sqrt(D))
+                    # self.latents = self.latents.reshape(B, C, grid_w, grid_h, W, H)
+                    # batch = batch.permute(0, 1, 2, 4, 3, 5)
+                    # batch = batch.reshape(B, C, grid_w * W, grid_h * H)
+                    if self.to_2d:
+                        B, C, W, H = x_hat.shape
+                        x_hat = x_hat.reshape(B, C, 8, W // 8, 8, H // 8)
+                        x_hat = x_hat.permute(0, 1, 2, 4, 3, 5)
+                        x_hat = x_hat.reshape(B, C, 8 * 8, W // 8, H // 8)
+                    
                     x_hat = x_hat.permute(0, 2, 1, 3, 4).squeeze(0) # slices as batch, 3D to 2D
                     
                     x_hat = x_hat[::int(x_hat.shape[0] / 10), ...] # => will be of shape (10, **image_size)

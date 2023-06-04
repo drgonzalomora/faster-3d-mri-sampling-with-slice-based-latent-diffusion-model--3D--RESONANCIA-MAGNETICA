@@ -11,7 +11,7 @@
 #SBATCH --mem 32000
 
 # Type of gpu to use, either gpu_all, gpu_k80, gpu_p100 or gpu_v100
-#SBATCH --partition gpu_v100
+#SBATCH --partition gpu_all
 
 # Number of gpu to use
 #SBATCH --gres gpu:4

@@ -116,7 +116,8 @@ if __name__ == "__main__":
             ImageGenerationLogger(
                 autoencoder,
                 n_samples=1,
-                every_n_epochs=2,
+                to_2d=True,
+                every_n_epochs=2
             )
         )
     
