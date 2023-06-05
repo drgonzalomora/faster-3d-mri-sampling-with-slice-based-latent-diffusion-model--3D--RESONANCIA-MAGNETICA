@@ -86,6 +86,16 @@ class ImageGenerationLogger(pl.Callback):
                     
                     x_hat = x_hat.permute(0, 2, 1, 3, 4).squeeze(0) # slices as batch, 3D to 2D
                     
+                    # denormalize -1, 1 to full range(TODO: HARD CODED)
+                    latents_min = -5.865797519683838
+                    latents_max = 6.593580722808838
+                    x_hat = x_hat / 2 + 0.5
+                    x_hat = x_hat * (latents_max - latents_min) + latents_min
+                    
+                    # sanity check
+                    print('Logger: {}'.format(x_hat.min))
+                    print('Logger: {}'.format(x_hat.max))
+                    
                     x_hat = x_hat[::int(x_hat.shape[0] / 10), ...] # => will be of shape (10, **image_size)
                     positions = torch.arange(0, x_hat.shape[0]).to(pl_module.device, torch.long)[::int(x_hat.shape[0] / 10)]
                     
