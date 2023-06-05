@@ -186,8 +186,8 @@ class BRATSLatentsDataModule(pl.LightningDataModule):
                 B, C, D, W, H = self.latents.shape
                 grid_w, grid_h = int(np.sqrt(D)), int(np.sqrt(D))
                 self.latents = self.latents.reshape(B, C, grid_w, grid_h, W, H)
-                batch = batch.permute(0, 1, 2, 4, 3, 5)
-                batch = batch.reshape(B, C, grid_w * W, grid_h * H)
+                self.latents = self.latents.transpose(0, 1, 2, 4, 3, 5)
+                self.latents = self.latents.reshape(B, C, grid_w * W, grid_h * H)
                     
             # min-max normalization between -1 and 1
             self.min, self.max = self.latents.min(), self.latents.max()
@@ -201,8 +201,8 @@ class BRATSLatentsDataModule(pl.LightningDataModule):
                 f.write(str(self.min) + '\n')
                 f.write(str(self.max) + '\n')
             
-            print('Min:', self.self.latents.min())
-            print('Max:', self.self.latents.max())
+            print('Min:', self.latents.min())
+            print('Max:', self.latents.max())
             print('Saved!')
             
         else:
