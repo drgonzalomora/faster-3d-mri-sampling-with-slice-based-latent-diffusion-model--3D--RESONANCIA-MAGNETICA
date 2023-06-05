@@ -117,7 +117,7 @@ if __name__ == "__main__":
                 autoencoder,
                 n_samples=1,
                 to_2d=True,
-                every_n_epochs=2
+                every_n_epochs=50
             )
         )
     

@@ -8,10 +8,10 @@
 #SBATCH --time 48:00:00
 
 # Memory to use (here 50Go)
-#SBATCH --mem 32000
+#SBATCH --mem 38000
 
 # Type of gpu to use, either gpu_all, gpu_k80, gpu_p100 or gpu_v100
-#SBATCH --partition gpu_all
+#SBATCH --partition gpu_v100
 
 # Number of gpu to use
 #SBATCH --gres gpu:4
