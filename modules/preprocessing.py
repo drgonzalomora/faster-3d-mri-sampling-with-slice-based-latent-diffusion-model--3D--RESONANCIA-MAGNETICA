@@ -122,8 +122,8 @@ class BRATSDataModule(pl.LightningDataModule):
         self.test_pos = self.slice_positions[train_size:]
 
         print('Train shape:', self.train_x.shape) 
-        print('Train slice positions shape:', self.train_pos.shape)
         print('Test shape:', self.test_x.shape)
+        print('Train slice positions shape:', self.train_pos.shape)
         print('Test slice positions shape:', self.test_pos.shape)
         
         self.train_dataset = IdentityDataset(self.train_x, self.train_pos)
