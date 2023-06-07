@@ -256,14 +256,14 @@ class VQLPIPSWithDiscriminator(nn.Module):
 
         split = split + '/' if split != 'train' else ''
         log = {
-            "{}total_loss": loss.clone().detach().mean(),
-            "{}quant_loss": codebook_loss.detach().mean(),
-            "{}l1_loss": l1_loss.detach().mean(),
-            "{}p_loss": p_loss.detach().mean(),
-            "{}rec_loss": rec_loss.detach().mean(),
-            "{}disc_weight": disc_weight.detach(),
-            "{}g_loss": g_loss.detach().mean(),
-            "{}cos_sim": cos_sim.detach().mean()
+            "{}total_loss".format(split): loss.clone().detach().mean(),
+            "{}quant_loss".format(split): codebook_loss.detach().mean(),
+            "{}l1_loss".format(split): l1_loss.detach().mean(),
+            "{}p_loss".format(split): p_loss.detach().mean(),
+            "{}rec_loss".format(split): rec_loss.detach().mean(),
+            "{}disc_weight".format(split): disc_weight.detach(),
+            "{}g_loss".format(split): g_loss.detach().mean(),
+            "{}cos_sim".format(split): cos_sim.detach().mean()
         }
         
         return loss, log
