@@ -39,7 +39,7 @@ class BRATSDataModule(pl.LightningDataModule):
         
         super().__init__()
         self.num_modalities = len(modalities)
-        self.prepare_data_per_node = False
+        self.prepare_data_per_node = True
 
         # just for a faster access
         self.save_hyperparameters()
@@ -84,7 +84,12 @@ class BRATSDataModule(pl.LightningDataModule):
             print('Saving dataset as npy file...')    
             # saving the dataset as a npy file
             np.save(self.hparams.npy_path, placeholder)
+            with open('norm.txt', 'w') as f:
+                f.write(str(placeholder.max()))
+                f.write(str(placeholder.min()))
+                
             print('Saved!')
+            print('Max: {}, Min: {}'.format(placeholder.max(), placeholder.min()))
                 
         else:
             print('Dataset already exists at {}'.format(self.hparams.npy_path))
@@ -114,7 +119,6 @@ class BRATSDataModule(pl.LightningDataModule):
         self.slice_positions = self.slice_positions.flatten()
         
         train_size = int(0.85 * self.data.shape[0])
-        val_size = self.data.shape[0] - train_size
         
         self.train_x = self.data[:train_size]
         self.train_pos = self.slice_positions[:train_size]
@@ -125,6 +129,7 @@ class BRATSDataModule(pl.LightningDataModule):
         print('Test shape:', self.test_x.shape)
         print('Train slice positions shape:', self.train_pos.shape)
         print('Test slice positions shape:', self.test_pos.shape)
+        print('Min: {}, Max: {}'.format(self.data.min(), self.data.max()))
         
         self.train_dataset = IdentityDataset(self.train_x, self.train_pos)
         self.test_dataset = IdentityDataset(self.test_x, self.test_pos)
@@ -164,7 +169,7 @@ class BRATSLatentsDataModule(pl.LightningDataModule):
         assert (os.path.exists(root_path) or os.path.exists(npy_path)), 'Provide at least one valid data source!'
         super().__init__()
         self.autoencoder = autoencoder
-        self.prepare_data_per_node = False # prepare_data executed only once on master node
+        self.prepare_data_per_node = True # prepare_data executed only once on master node
         self.save_hyperparameters(ignore=['autoencoder'])       
         
     def prepare_data(self) -> None:

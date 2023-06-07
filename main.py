@@ -143,7 +143,7 @@ if __name__ == "__main__":
         # num_nodes=1,
         accelerator='gpu',
         precision=16,
-        max_epochs=5000,
+        max_epochs=300,
         log_every_n_steps=1,
         check_val_every_n_epoch=5,
         enable_progress_bar=True,
