@@ -16,33 +16,34 @@ class ImageReconstructionLogger(pl.Callback):
         self.modalities = modalities
 
     def on_train_epoch_end(self, trainer, pl_module):
-        # sample images
-        pl_module.eval()
-        with torch.no_grad():
-            x, pos = next(iter(trainer.val_dataloaders[0]))
-            x, pos = x.to(pl_module.device, torch.float32), pos.to(pl_module.device, torch.long)
+        if trainer.global_rank == 0:
+            # sample images
+            pl_module.eval()
+            with torch.no_grad():
+                x, pos = next(iter(trainer.val_dataloaders[0]))
+                x, pos = x.to(pl_module.device, torch.float32), pos.to(pl_module.device, torch.long)
 
-            x, pos = x[:self.n_samples], pos[:self.n_samples]
-            x_hat = pl_module(x, pos)[0]
+                x, pos = x[:self.n_samples], pos[:self.n_samples]
+                x_hat = pl_module(x, pos)[0]
 
-            originals = torch.cat([
-                torch.hstack([img for img in x[:, idx, ...]])
-                for idx in range(self.modalities.__len__())
-            ], dim=0)
-            
-            reconstructed = torch.cat([
-                torch.hstack([img for img in x_hat[:, idx, ...]])
-                for idx in range(self.modalities.__len__())
-            ], dim=0)
-            
-            img = torch.cat([originals, reconstructed], dim=0)
-            
-            wandb.log({
-                'Reconstruction examples': wandb.Image(
-                    img.detach().cpu().numpy(), 
-                    caption='{} - {} (Top are originals)'.format(self.modalities, trainer.current_epoch)
-                )
-            })
+                originals = torch.cat([
+                    torch.hstack([img for img in x[:, idx, ...]])
+                    for idx in range(self.modalities.__len__())
+                ], dim=0)
+                
+                reconstructed = torch.cat([
+                    torch.hstack([img for img in x_hat[:, idx, ...]])
+                    for idx in range(self.modalities.__len__())
+                ], dim=0)
+                
+                img = torch.cat([originals, reconstructed], dim=0)
+                
+                wandb.log({
+                    'Reconstruction examples': wandb.Image(
+                        img.detach().cpu().numpy(), 
+                        caption='{} - {} (Top are originals)'.format(self.modalities, trainer.current_epoch)
+                    )
+                })
             
 
 class ImageGenerationLogger(pl.Callback):
