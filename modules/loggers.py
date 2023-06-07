@@ -1,6 +1,7 @@
 import torch
 import pytorch_lightning as pl
 import wandb
+import numpy as np
 
 from .autoencoder.gaussian_autoencoder import GaussianAutoencoder
 from .autoencoder.vector_quantized_autoencoder import VQAutoencoder
@@ -20,9 +21,9 @@ class ImageReconstructionLogger(pl.Callback):
             # sample images
             pl_module.eval()
             with torch.no_grad():
-                x, pos = next(iter(trainer.val_dataloaders[0]))
+                rand_idx = np.random.randint(0, trainer.val_dataloaders.dataset.__len__(), size=(self.n_samples,))
+                x, pos = trainer.val_dataloaders.dataset[rand_idx]
                 x, pos = x.to(pl_module.device, torch.float32), pos.to(pl_module.device, torch.long)
-
                 x, pos = x[:self.n_samples], pos[:self.n_samples]
                 x_hat = pl_module(x, pos)[0]
 

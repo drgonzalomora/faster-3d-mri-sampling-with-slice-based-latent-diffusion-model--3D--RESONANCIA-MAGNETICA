@@ -241,7 +241,7 @@ class VQLPIPSWithDiscriminator(nn.Module):
         g_loss = -torch.mean(logits_fake)
 
         disc_weight = torch.tensor(0.0)
-        if global_step > self.disc_start:
+        if global_step > self.disc_start and split == 'train':
             disc_weight = self.calculate_adaptive_weight(rec_loss, g_loss, last_layer)
 
         # cos_sim loss

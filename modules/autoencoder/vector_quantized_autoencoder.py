@@ -259,7 +259,7 @@ class VQAutoencoder(pl.LightningModule):
         x, pos = x.type(torch.float16), pos.type(torch.long)
         
         x_hat, z_i, qloss, _ = self.forward(x, pos, return_indices=True)
-        ae_loss, ae_log = self.loss.autoencoder_loss(
+        _, ae_log = self.loss.autoencoder_loss(
             qloss, x, x_hat, z_i, self.global_step, last_layer=self.decoder.out_conv[-1].weight, split='val'
         )
 

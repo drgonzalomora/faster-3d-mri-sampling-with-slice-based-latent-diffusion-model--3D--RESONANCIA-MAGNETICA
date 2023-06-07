@@ -85,8 +85,8 @@ class BRATSDataModule(pl.LightningDataModule):
             # saving the dataset as a npy file
             np.save(self.hparams.npy_path, placeholder)
             with open('norm.txt', 'w') as f:
-                f.write(str(placeholder.max()))
-                f.write(str(placeholder.min()))
+                f.write(str(placeholder.max()) + '\n')
+                f.write(str(placeholder.min()) + '\n')
                 
             print('Saved!')
             print('Max: {}, Min: {}'.format(placeholder.max(), placeholder.min()))
