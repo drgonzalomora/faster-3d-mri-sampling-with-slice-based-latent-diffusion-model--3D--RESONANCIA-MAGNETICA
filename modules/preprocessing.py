@@ -81,13 +81,13 @@ class BRATSDataModule(pl.LightningDataModule):
                 for idx_m, m in enumerate(self.hparams.modalities):
                     placeholder[idx, idx_m, :, :] = volumes[m]
 
-                print('Saving dataset as npy file...')    
-                # saving the dataset as a npy file
-                np.save(self.hparams.npy_path, placeholder)
-                print('Saved!')
+            print('Saving dataset as npy file...')    
+            # saving the dataset as a npy file
+            np.save(self.hparams.npy_path, placeholder)
+            print('Saved!')
                 
-            else:
-                print('Dataset already exists at {}'.format(self.hparams.npy_path))
+        else:
+            print('Dataset already exists at {}'.format(self.hparams.npy_path))
         
     def setup(self, stage='fit'):
         assert os.path.exists(self.hparams.npy_path), 'npy data file does not exist!'
@@ -229,6 +229,27 @@ class BRATSLatentsDataModule(pl.LightningDataModule):
         else:
             print('Dataset already exists at {}'.format(self.hparams.npy_path))
             
+    def setup(self, stage='fit'):
+        assert os.path.exists(self.hparams.npy_path), 'npy data file does not exist!'
+        
+        print('Loading dataset from npy file...')
+        data = np.load(self.hparams.npy_path, allow_pickle=True)
+        self.latents = data[:self.hparams.n_samples]
+        print('Latents shape:', self.latents.shape)
+        print('Min:', self.latents.min())
+        print('Max:', self.latents.max())
+        
+        self.dataset = IdentityDataset(self.latents)
+    
+    def train_dataloader(self):
+        return torch.utils.data.DataLoader(
+            self.dataset,
+            batch_size=self.hparams.batch_size,
+            shuffle=self.hparams.shuffle,
+            num_workers=self.hparams.num_workers,
+            pin_memory=True,
+            drop_last=True
+        )   
     def setup(self, stage='fit'):
         assert os.path.exists(self.hparams.npy_path), 'npy data file does not exist!'
         

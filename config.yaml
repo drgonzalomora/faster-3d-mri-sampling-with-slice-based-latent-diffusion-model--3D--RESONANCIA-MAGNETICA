@@ -1,8 +1,8 @@
-target: diffusion-training # first-stage-training, diffusion-training, inference
+target: first-stage-training # first-stage-training, diffusion-training, inference
 data:
     first_stage:
         shape: [64, 128, 128]
-        n_samples: 500
+        n_samples: 600
         modalities:
         - flair
         - seg

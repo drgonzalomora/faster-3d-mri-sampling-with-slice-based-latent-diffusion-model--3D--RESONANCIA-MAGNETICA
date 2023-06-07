@@ -138,11 +138,11 @@ if __name__ == "__main__":
     # training
     trainer = pl.Trainer(
         logger=logger,
-        strategy="ddp",
-        devices=4,
-        num_nodes=1,
+        # strategy="ddp",
+        # devices=4,
+        # num_nodes=1,
         accelerator='gpu',
-        precision=32,
+        precision=16,
         max_epochs=5000,
         log_every_n_steps=1,
         check_val_every_n_epoch=5,
