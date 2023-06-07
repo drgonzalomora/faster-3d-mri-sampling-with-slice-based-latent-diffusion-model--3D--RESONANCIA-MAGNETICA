@@ -1,4 +1,6 @@
+from typing import Any, Optional
 import numpy as np
+from pytorch_lightning.utilities.types import STEP_OUTPUT
 import torch
 import torch.nn as nn
 import pytorch_lightning as pl
@@ -251,7 +253,17 @@ class VQAutoencoder(pl.LightningModule):
         # logging
         self.log_dict(ae_log, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         self.log_dict(disc_log, on_step=True, on_epoch=True, prog_bar=False, logger=True)
+        
+    def validation_step(self, batch, batch_idx):
+        x, pos = batch
+        x, pos = x.type(torch.float16), pos.type(torch.long)
+        
+        x_hat, z_i, qloss, _ = self.forward(x, pos, return_indices=True)
+        ae_loss, ae_log = self.loss.autoencoder_loss(
+            qloss, x, x_hat, z_i, self.global_step, last_layer=self.decoder.out_conv[-1].weight, split='val'
+        )
 
+        self.log_dict(ae_log, on_step=False, on_epoch=True, prog_bar=True, logger=True)
     
     def configure_optimizers(self):
         ae_opt = torch.optim.AdamW(list(self.encoders.parameters()) + 

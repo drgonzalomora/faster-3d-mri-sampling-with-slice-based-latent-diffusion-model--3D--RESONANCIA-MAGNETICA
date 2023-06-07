@@ -223,7 +223,7 @@ class VQLPIPSWithDiscriminator(nn.Module):
         disc_weight = disc_weight * self.disc_weight
         return disc_weight
     
-    def autoencoder_loss(self, codebook_loss, x, recon_x, z_i, global_step, last_layer=None):
+    def autoencoder_loss(self, codebook_loss, x, recon_x, z_i, global_step, last_layer=None, split='train'):
         # l1_loss
         l1_loss = F.l1_loss(recon_x[:, 0, None, :, :], x[:, 0, None, :, :], reduction='none') * self.pixel_weight
         l1_loss += F.mse_loss(recon_x[:, 1, None, :, :], x[:, 1, None, :, :], reduction='none') * self.pixel_weight
@@ -254,16 +254,17 @@ class VQLPIPSWithDiscriminator(nn.Module):
         # compute total loss
         loss = rec_loss + disc_weight * g_loss + self.codebook_weight * codebook_loss.mean() + cos_sim * self.cos_weight
 
+        split = split + '/' if split != 'train' else ''
         log = {
-                "total_loss": loss.clone().detach().mean(),
-                "quant_loss": codebook_loss.detach().mean(),
-                "l1_loss": l1_loss.detach().mean(),
-                "p_loss": p_loss.detach().mean(),
-                "rec_loss": rec_loss.detach().mean(),
-                "disc_weight": disc_weight.detach(),
-                "g_loss": g_loss.detach().mean(),
-                "cos_sim": cos_sim.detach().mean()
-            }
+            "{}total_loss": loss.clone().detach().mean(),
+            "{}quant_loss": codebook_loss.detach().mean(),
+            "{}l1_loss": l1_loss.detach().mean(),
+            "{}p_loss": p_loss.detach().mean(),
+            "{}rec_loss": rec_loss.detach().mean(),
+            "{}disc_weight": disc_weight.detach(),
+            "{}g_loss": g_loss.detach().mean(),
+            "{}cos_sim": cos_sim.detach().mean()
+        }
         
         return loss, log
     

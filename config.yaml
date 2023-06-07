@@ -64,7 +64,7 @@ autoencoder:
     attn: []
     learning_rate: 0.00001
     loss:
-        disc_start: 15001
+        disc_start: 10001
         codebook_weight: 1.0
         pixel_weight: 1.0
         perceptual_weight: 1.0

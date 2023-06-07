@@ -1,4 +1,5 @@
 import numpy as np
+from pytorch_lightning.utilities.types import EVAL_DATALOADERS
 import torch
 import pytorch_lightning as pl
 from nibabel import load
@@ -111,17 +112,37 @@ class BRATSDataModule(pl.LightningDataModule):
         # keeping track on slice positions for positional embedding
         self.slice_positions = torch.arange(D)[None, :].repeat(self.hparams.n_samples, 1)
         self.slice_positions = self.slice_positions.flatten()
-
-        print('Data shape:', self.data.shape)
-        print('Slice positions shape:', self.slice_positions.shape)
         
-        self.dataset = IdentityDataset(self.data, self.slice_positions)
+        train_size = int(0.85 * self.data.shape[0])
+        val_size = self.data.shape[0] - train_size
+        
+        self.train_x = self.data[:train_size]
+        self.train_pos = self.slice_positions[:train_size]
+        self.test_x = self.data[train_size:]
+        self.test_pos = self.slice_positions[train_size:]
+
+        print('Train shape:', self.train_x.shape) 
+        print('Train slice positions shape:', self.train_pos.shape)
+        print('Test shape:', self.test_x.shape)
+        print('Test slice positions shape:', self.test_pos.shape)
+        
+        self.train_dataset = IdentityDataset(self.train_x, self.train_pos)
+        self.test_dataset = IdentityDataset(self.test_x, self.test_pos)
 
     def train_dataloader(self):
         return torch.utils.data.DataLoader(
-            self.dataset, 
+            self.train_dataset, 
             batch_size=self.hparams.batch_size, 
             shuffle=self.hparams.shuffle, 
+            num_workers=self.hparams.num_workers, 
+            pin_memory=True
+        )
+        
+    def val_dataloader(self):
+        return torch.utils.data.DataLoader(
+            self.test_dataset, 
+            batch_size=self.hparams.batch_size, 
+            shuffle=False, 
             num_workers=self.hparams.num_workers, 
             pin_memory=True
         )

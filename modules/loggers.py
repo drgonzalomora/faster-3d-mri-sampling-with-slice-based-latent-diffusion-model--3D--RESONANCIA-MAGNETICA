@@ -19,7 +19,7 @@ class ImageReconstructionLogger(pl.Callback):
         # sample images
         pl_module.eval()
         with torch.no_grad():
-            x, pos = next(iter(trainer.train_dataloader))
+            x, pos = next(iter(trainer.val_dataloaders[0]))
             x, pos = x.to(pl_module.device, torch.float32), pos.to(pl_module.device, torch.long)
 
             x, pos = x[:self.n_samples], pos[:self.n_samples]
