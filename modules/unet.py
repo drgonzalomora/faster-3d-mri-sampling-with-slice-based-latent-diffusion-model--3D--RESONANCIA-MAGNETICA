@@ -681,7 +681,7 @@ class UNetModel(pl.LightningModule):
     
     def training_step(self, batch, batch_idx):
         x_i = batch[0].type(self.f_precision)
-        B = x_i.shape[0]
+        # B = x_i.shape[0]
         
         # forward step
         times, weights = self.sampler.sample()

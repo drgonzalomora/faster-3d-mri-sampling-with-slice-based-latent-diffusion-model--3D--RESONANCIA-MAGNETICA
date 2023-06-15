@@ -1,5 +1,4 @@
 import numpy as np
-from pytorch_lightning.utilities.types import EVAL_DATALOADERS
 import torch
 import pytorch_lightning as pl
 from nibabel import load
@@ -210,22 +209,22 @@ class BRATSLatentsDataModule(pl.LightningDataModule):
             # => to 2D
             if self.hparams.to_2d:
                 B, C, D, W, H = self.latents.shape
-                grid_w, grid_h = int(np.sqrt(D)), int(np.sqrt(D))
+                grid_w = grid_h = int(np.sqrt(D))
                 self.latents = self.latents.reshape(B, C, grid_w, grid_h, W, H)
                 self.latents = self.latents.transpose(0, 1, 2, 4, 3, 5)
                 self.latents = self.latents.reshape(B, C, grid_w * W, grid_h * H)
                     
-            # min-max normalization between -1 and 1
-            self.min, self.max = self.latents.min(), self.latents.max()
-            self.latents = (self.latents - self.min) * 2 / (self.max - self.min) - 1
+            # # min-max normalization between -1 and 1
+            # self.min, self.max = self.latents.min(), self.latents.max()
+            # self.latents = (self.latents - self.min) * 2 / (self.max - self.min) - 1
                     
-            print('Saving dataset as npy file... [norm.txt]')
+            print('Saving dataset as npy file...')
             np.save(self.hparams.npy_path, self.latents)
             
-            # save the min max in a norm.txt file
-            with open(os.path.join(os.path.dirname(self.hparams.npy_path), 'norm.txt'), 'w') as f:
-                f.write(str(self.min) + '\n')
-                f.write(str(self.max) + '\n')
+            # # save the min max in a norm.txt file
+            # with open(os.path.join(os.path.dirname(self.hparams.npy_path), 'norm.txt'), 'w') as f:
+            #     f.write(str(self.min) + '\n')
+            #     f.write(str(self.max) + '\n')
             
             print('Min:', self.latents.min())
             print('Max:', self.latents.max())
@@ -254,25 +253,4 @@ class BRATSLatentsDataModule(pl.LightningDataModule):
             num_workers=self.hparams.num_workers,
             pin_memory=True,
             drop_last=True
-        )   
-    def setup(self, stage='fit'):
-        assert os.path.exists(self.hparams.npy_path), 'npy data file does not exist!'
-        
-        print('Loading dataset from npy file...')
-        data = np.load(self.hparams.npy_path, allow_pickle=True)
-        self.latents = data[:self.hparams.n_samples]
-        print('Latents shape:', self.latents.shape)
-        print('Min:', self.latents.min())
-        print('Max:', self.latents.max())
-        
-        self.dataset = IdentityDataset(self.latents)
-    
-    def train_dataloader(self):
-        return torch.utils.data.DataLoader(
-            self.dataset,
-            batch_size=self.hparams.batch_size,
-            shuffle=self.hparams.shuffle,
-            num_workers=self.hparams.num_workers,
-            pin_memory=True,
-            drop_last=True
-        )
+        )  

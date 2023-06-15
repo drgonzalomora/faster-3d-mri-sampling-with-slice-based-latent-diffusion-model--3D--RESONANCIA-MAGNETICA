@@ -1,4 +1,4 @@
-target: first-stage-training # first-stage-training, diffusion-training, inference
+target: diffusion-training # first-stage-training, diffusion-training, inference
 data:
     first_stage:
         shape: [64, 128, 128]
@@ -18,7 +18,7 @@ data:
         to_2d: true
         root_pat: ./data/brats_preprocessed.npy
         npy_path: ./data/brats_preprocessed_latents.npy
-        batch_size: 4
+        batch_size: 8
         shuffle: true
         num_workers: 6
 unet:
@@ -78,7 +78,7 @@ autoencoder:
         kl_weight: 0.000001
 diffusion:
     learn_sigma: false
-    T: 500
+    T: 750
     beta_schedule: cosine
     model_mean_type: epsilon
     model_var_type: fixed_small

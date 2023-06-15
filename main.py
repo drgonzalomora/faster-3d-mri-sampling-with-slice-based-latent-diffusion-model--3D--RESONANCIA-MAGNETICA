@@ -13,7 +13,7 @@ from modules.autoencoder.gaussian_autoencoder import GaussianAutoencoder
 from modules.autoencoder.vector_quantized_autoencoder import VQAutoencoder
 from modules.loggers import ImageReconstructionLogger, ImageGenerationLogger
 from modules.unet import UNetModel
-from modules.diffusion import Diffusion
+from modules.diffusion import Diffusion, SimpleDiffusion
 from modules.sampler import ScheduleSampler
 
 os.environ['WANDB_API_KEY'] = 'bdc8857f9d6f7010cff35bcdc0ae9413e05c75e1'
@@ -31,7 +31,7 @@ def global_seed(seed, debugging=False):
     
 if __name__ == "__main__":
     global_seed(42)
-    # torch.set_float32_matmul_precision('high')
+    torch.set_float32_matmul_precision('high')
     
     # loading config file
     CONFIG_PATH = './config.yaml'
@@ -89,13 +89,19 @@ if __name__ == "__main__":
         datamodule = BRATSLatentsDataModule(autoencoder=autoencoder, **cfg.data.diffusion)
         
         sampler = ScheduleSampler(
-                T=cfg.diffusion.T,
-                batch_size=cfg.data.diffusion.batch_size,
-                sampler=cfg.diffusion.schedule_sampler,
-                memory_span=cfg.diffusion.loss_memory_span,
-                device=device
-            )
-        diffusion = Diffusion(**cfg.diffusion)
+            T=cfg.diffusion.T,
+            batch_size=cfg.data.diffusion.batch_size,
+            sampler=cfg.diffusion.schedule_sampler,
+            memory_span=cfg.diffusion.loss_memory_span,
+            device=device
+        )
+
+        # diffusion = Diffusion(**cfg.diffusion)
+        diffusion = SimpleDiffusion(
+            noise_shape=[4, 256, 256],
+            T=cfg.diffusion.T,
+            beta_schedule='cosine'
+        )
         
         if cfg.unet.use_checkpoint:
             print('Resuming training from checkpoint ... ')
@@ -117,7 +123,7 @@ if __name__ == "__main__":
                 autoencoder,
                 n_samples=1,
                 to_2d=True,
-                every_n_epochs=50
+                every_n_epochs=25
             )
         )
     
@@ -142,10 +148,9 @@ if __name__ == "__main__":
         # devices=4,
         # num_nodes=1,
         accelerator='gpu',
-        precision=16,
-        max_epochs=300,
+        precision=32,
+        max_epochs=5000,
         log_every_n_steps=1,
-        check_val_every_n_epoch=5,
         enable_progress_bar=True,
         callbacks=callbacks
     )
