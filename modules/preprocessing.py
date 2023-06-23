@@ -23,15 +23,15 @@ class IdentityDataset(torch.utils.data.Dataset):
 
 class BRATSDataModule(pl.LightningDataModule):
     def __init__(self,
-        target_shape=(64, 128, 128),
-        n_samples=500,
-        modalities=['t1', 't1ce', 't2', 'flair', 'seg'],
-        binarize=True,
-        npy_path='../data/brats_preprocessed.npy',
-        root_path='../../common_data/RSNA_ASNR_MICCAI_BraTS2021_TrainingData_16July2021',
-        batch_size=32,
-        shuffle=True,
-        num_workers=4,
+        target_shape    = (64, 128, 128),
+        n_samples       = 500,
+        modalities      = ['t1', 't1ce', 't2', 'flair', 'seg'],
+        binarize        = True,
+        npy_path        = '../data/brats_preprocessed.npy',
+        root_path       = '../../common_data/RSNA_ASNR_MICCAI_BraTS2021_TrainingData_16July2021',
+        batch_size      = 32,
+        shuffle         = True,
+        num_workers     = 6,
         **kwargs
     ) -> None:
         assert all([m in ['t1', 't1ce', 't2', 'flair', 'seg'] for m in modalities]), 'Invalid modality!'
@@ -83,13 +83,8 @@ class BRATSDataModule(pl.LightningDataModule):
             print('Saving dataset as npy file...')    
             # saving the dataset as a npy file
             np.save(self.hparams.npy_path, placeholder)
-            with open('norm.txt', 'w') as f:
-                f.write(str(placeholder.max()) + '\n')
-                f.write(str(placeholder.min()) + '\n')
                 
             print('Saved!')
-            print('Max: {}, Min: {}'.format(placeholder.max(), placeholder.min()))
-                
         else:
             print('Dataset already exists at {}'.format(self.hparams.npy_path))
         
@@ -101,12 +96,12 @@ class BRATSDataModule(pl.LightningDataModule):
         self.data = self.data[:self.hparams.n_samples]
         
         # normalize the data [-1, 1]
-        norm = lambda data: data * 2 / data.max() - 1
-        for m in range(self.num_modalities):
-            for idx in range(self.hparams.n_samples):
-                self.data[idx, m] = norm(self.data[idx, m]).type(torch.float32)
+        # norm = lambda data: data * 2 / data.max() - 1
+        # for m in range(self.num_modalities):
+        #     for idx in range(self.hparams.n_samples):
+        #         self.data[idx, m] = norm(self.data[idx, m]).type(torch.float32)
+        # self.data.clamp(-1, 1)
 
-        self.data.clamp(-1, 1)
         self.data = self.data.permute(0, 4, 1, 2, 3) # depth first
             
         # if switching to 2D for autoencoder training
@@ -154,15 +149,15 @@ class BRATSDataModule(pl.LightningDataModule):
 class BRATSLatentsDataModule(pl.LightningDataModule):
     def __init__(self,
         autoencoder,
-        latent_shape=(1, 32, 32),
-        to_2d=True,
-        root_path='./data/brats_preprocessed.npy',
-        npy_path='./data/brats_preprocessed_latents.npy',
-        n_samples=500,
-        save_npy=True,
-        batch_size=32,
-        shuffle=True,
-        num_workers=4,
+        latent_shape    = (1, 32, 32),
+        to_2d           = True,
+        root_path       = './data/brats_preprocessed.npy',
+        npy_path        = './data/brats_preprocessed_latents.npy',
+        n_samples       = 500,
+        save_npy        = True,
+        batch_size      = 32,
+        shuffle         = True,
+        num_workers     = 6,
         **kwargs
     ) -> None:
         assert (os.path.exists(root_path) or os.path.exists(npy_path)), 'Provide at least one valid data source!'
@@ -192,7 +187,7 @@ class BRATSLatentsDataModule(pl.LightningDataModule):
                 
                 with torch.no_grad():
                     # encode a whole volume at once
-                    pos = torch.arange(0, 64, device=device, dtype=torch.long)
+                    pos = torch.arange(0, data.shape[1], device=device, dtype=torch.long)
                     pemb = self.autoencoder.encode_position(pos)
                     if isinstance(self.autoencoder, GaussianAutoencoder):
                         z = self.autoencoder.encode(input, pemb).sample()
@@ -208,26 +203,18 @@ class BRATSLatentsDataModule(pl.LightningDataModule):
             
             # => to 2D
             if self.hparams.to_2d:
-                B, C, D, W, H = self.latents.shape
-                grid_w = grid_h = int(np.sqrt(D))
-                self.latents = self.latents.reshape(B, C, grid_w, grid_h, W, H)
-                self.latents = self.latents.transpose(0, 1, 2, 4, 3, 5)
-                self.latents = self.latents.reshape(B, C, grid_w * W, grid_h * H)
-                    
-            # # min-max normalization between -1 and 1
-            # self.min, self.max = self.latents.min(), self.latents.max()
-            # self.latents = (self.latents - self.min) * 2 / (self.max - self.min) - 1
+                N, C, D, W, H = self.latents.shape
+                w = h = int(np.sqrt(D * W * H))
+                self.latents = self.latents.reshape(N, C, w, h)
+                # grid_w = grid_h = int(np.sqrt(D))
+                # self.latents = self.latents.reshape(B, C, grid_w, grid_h, W, H)
+                # self.latents = self.latents.transpose(0, 1, 2, 4, 3, 5)
+                # self.latents = self.latents.reshape(B, C, grid_w * W, grid_h * H)
                     
             print('Saving dataset as npy file...')
             np.save(self.hparams.npy_path, self.latents)
-            
-            # # save the min max in a norm.txt file
-            # with open(os.path.join(os.path.dirname(self.hparams.npy_path), 'norm.txt'), 'w') as f:
-            #     f.write(str(self.min) + '\n')
-            #     f.write(str(self.max) + '\n')
-            
-            print('Min:', self.latents.min())
-            print('Max:', self.latents.max())
+            print('Min latents:', self.latents.min())
+            print('Max latents:', self.latents.max())
             print('Saved!')
             
         else:
@@ -240,9 +227,6 @@ class BRATSLatentsDataModule(pl.LightningDataModule):
         data = np.load(self.hparams.npy_path, allow_pickle=True)
         self.latents = data[:self.hparams.n_samples]
         print('Latents shape:', self.latents.shape)
-        print('Min:', self.latents.min())
-        print('Max:', self.latents.max())
-        
         self.dataset = IdentityDataset(self.latents)
     
     def train_dataloader(self):

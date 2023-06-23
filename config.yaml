@@ -1,7 +1,7 @@
 target: diffusion-training # first-stage-training, diffusion-training, inference
 data:
     first_stage:
-        shape: [64, 128, 128]
+        shape: [64, 64, 64]
         n_samples: 1000
         modalities:
         - flair
@@ -11,7 +11,7 @@ data:
         root_path: ../common_data/RSNA_ASNR_MICCAI_BraTS2021_TrainingData_16July2021
         batch_size: 32
         shuffle: true
-        num_workers: 8
+        num_workers: 6
     diffusion:
         latent_shape: [4, 32, 32]
         n_samples: 1000
@@ -46,22 +46,22 @@ unet:
     weight_decay: 0.0000001
 autoencoder:
     target: VQAutoencoder # specifies which autoencoder to use
-    input_shape: [2, 128, 128] # channels, height, width
-    latent_shape: [4, 32, 32] # in_channels * embed_dim, height, width
+    input_shape: [2, 64, 64] # channels, height, width
+    latent_shape: [2, 16, 16] # in_channels * embed_dim, height, width
     n_embed: 8192
-    embed_dim: 2
+    embed_dim: 1
     z_channels: 2
     z_double: false
-    latent_dim: 32
+    latent_dim: 16
     pemb_dim: 128
-    T: 64
+    T: 64 # number of slices
     num_channels: 128
     channels_mult:
     - 1
     - 2
     - 4
     num_res_blocks: 2
-    attn: []
+    attn: [False, False, True]
     learning_rate: 0.00001
     loss:
         disc_start: 10001

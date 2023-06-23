@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import pytorch_lightning as pl
 
-from .modules import (
+from .base_autoencoder import (
     TimePositionalEmbedding, EncodingBlock, DecodingBlock,
     ResidualBlock, SelfAttention
 )

@@ -308,8 +308,6 @@ class SimpleDiffusion(nn.Module):
             x_t = alpha_t.rsqrt() * (x_t - beta_t / torch.sqrt((1 - alpha_hat_t_prev)) * eps) + var
         return x_t
 
-
-
 class SpacedDiffusion(Diffusion):
     """Partially adapted from https://github.com/openai/guided-diffusion/blob/main/guided_diffusion/respace.py"""
     def __init__(self, 
