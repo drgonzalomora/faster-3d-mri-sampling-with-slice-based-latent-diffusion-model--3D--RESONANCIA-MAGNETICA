@@ -225,8 +225,7 @@ class VQLPIPSWithDiscriminator(nn.Module):
     
     def autoencoder_loss(self, codebook_loss, x, recon_x, z_i, global_step, last_layer=None, split='train'):
         # l1_loss
-        l1_loss = F.l1_loss(recon_x[:, 0, None, :, :], x[:, 0, None, :, :], reduction='none') * self.pixel_weight
-        l1_loss += F.mse_loss(recon_x[:, 1, None, :, :], x[:, 1, None, :, :], reduction='none') * self.pixel_weight
+        l1_loss = F.l1_loss(recon_x, x, reduction='none') * self.pixel_weight
 
         # perceptual loss
         if self.perceptual_weight > 0:

@@ -1,8 +1,8 @@
-target: diffusion-training # first-stage-training, diffusion-training, inference
+target: first-stage-training # first-stage-training, diffusion-training, inference
 data:
     first_stage:
-        shape: [64, 64, 64]
-        n_samples: 1000
+        target_shape: [64, 64, 64]
+        n_samples: 500
         modalities:
         - flair
         - seg
@@ -69,11 +69,11 @@ autoencoder:
         pixel_weight: 1.0
         perceptual_weight: 1.0
         disc_weight: 0.5
-        cos_weight: 0.0
         disc_input_channels: 2
         disc_channels: 64
         disc_num_layers: 3
         disc_factor: 1.0
+        lr_d_factor: 1.0
         logvar_init: 0.0
         kl_weight: 0.000001
 diffusion:

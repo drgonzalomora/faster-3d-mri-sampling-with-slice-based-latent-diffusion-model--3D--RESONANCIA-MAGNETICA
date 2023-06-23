@@ -96,11 +96,11 @@ class BRATSDataModule(pl.LightningDataModule):
         self.data = self.data[:self.hparams.n_samples]
         
         # normalize the data [-1, 1]
-        # norm = lambda data: data * 2 / data.max() - 1
-        # for m in range(self.num_modalities):
-        #     for idx in range(self.hparams.n_samples):
-        #         self.data[idx, m] = norm(self.data[idx, m]).type(torch.float32)
-        # self.data.clamp(-1, 1)
+        norm = lambda data: data * 2 / data.max() - 1
+        for m in range(self.num_modalities):
+            for idx in range(self.hparams.n_samples):
+                self.data[idx, m] = norm(self.data[idx, m]).type(torch.float32)
+        self.data.clamp(-1, 1)
 
         self.data = self.data.permute(0, 4, 1, 2, 3) # depth first
             
