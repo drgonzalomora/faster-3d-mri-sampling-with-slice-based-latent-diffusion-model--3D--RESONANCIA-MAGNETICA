@@ -33,11 +33,10 @@ class WeightStandardizedConv2d(nn.Conv2d):
 class ConvBlock(nn.Module):
     def __init__(self, in_channels, out_channels, groups=32, dropout=0.0) -> None:
         super().__init__()
+        self.norm = nn.GroupNorm(groups, in_channels)
         self.conv = WeightStandardizedConv2d(in_channels, out_channels, kernel_size=3, padding=1)
-        self.norm = nn.GroupNorm(groups, out_channels)
         self.act = nn.SiLU()
-        if dropout > 0:
-            self.dropout = nn.Dropout(dropout)
+        self.dropout = nn.Dropout(dropout) if dropout > 0 else nn.Identity()
 
     def forward(self, x):
         x = self.norm(x)
@@ -71,7 +70,7 @@ class ResidualBlock(nn.Module):
         ) if temb_dim is not None else nn.Identity()
 
         self.block_a = ConvBlock(in_channels, out_channels, groups=groups)
-        self.block_b = ConvBlock(out_channels, out_channels, groups=groups)
+        self.block_b = ConvBlock(out_channels, out_channels, groups=groups, dropout=dropout)
         self.residual_proj = nn.Conv2d(in_channels, out_channels, kernel_size=1) if in_channels != out_channels else nn.Identity()
         self.dropout = dropout
 
@@ -79,7 +78,7 @@ class ResidualBlock(nn.Module):
         h = self.block_a(x)
         if temb is not None:
             h = h + self.temb_proj(temb)[:, :, None, None]
-        h = self.block_b(h, dropout=self.dropout)
+        h = self.block_b(h)
         return h + self.residual_proj(x)
     
 class SelfAttention(nn.Module):
@@ -102,7 +101,7 @@ class SelfAttention(nn.Module):
 
         attention = torch.softmax(torch.matmul(q, k) * self.scale, dim=-1)
         attention = torch.matmul(attention, v)
-        attention = attention.permute(0, 1, 3, 2).view(B, self.num_heads * self.head_dim, H, W)
+        attention = attention.permute(0, 1, 3, 2).contiguous().view(B, self.num_heads * self.head_dim, H, W)
         return self.norm(x + self.proj(attention))
     
 class LinAttention(SelfAttention):

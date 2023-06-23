@@ -15,15 +15,14 @@ from ..ema import LitEma
 class Encoder(nn.Module):
     def __init__(
         self,
-        *,
         in_channels,
         num_channels        = 128,
         channels_mult       = [1, 2, 4, 8],
-        num_res_blocks,
+        num_res_blocks      = 2,
         attn                = None, 
         temb_dim            = None,
         dropout             = 0.0,
-        z_channels,
+        z_channels          = 2,
         double_z            = False,
         **kwargs
     ) -> None:
@@ -53,7 +52,7 @@ class Encoder(nn.Module):
             out_channels=bottleneck_channels, 
             temb_dim=temb_dim, 
             groups=8,
-            drop_out=dropout
+            dropout=dropout
         )
         self.bottleneck_sa = SelfAttention(
             in_channels=bottleneck_channels, 
@@ -98,24 +97,22 @@ class Encoder(nn.Module):
 class Decoder(nn.Module):
     def __init__(
         self,
-        *,
         out_channels,
         num_channels        = 128,
         channels_mult       = [1, 2, 4, 8],
-        num_res_blocks,
+        num_res_blocks      = 2,
         attn                = None, 
         temb_dim            = None,
         dropout             = 0.0,
-        z_channels,
+        z_channels          = 2,
         double_z            = False,
         tanh                = False,
         **kwargs
     ) -> None:
         super().__init__()
 
-
-        self.attn = attn if (attn != None and attn != False and attn != []) else [False] * self.channels_mult.__len__()
-
+        self.attn = tuple(reversed(attn)) \
+                    if (attn != None and attn != False and attn != []) else [False] * self.channels_mult.__len__()
 
         self.channels_mult = tuple(reversed(channels_mult)) + (1,)
         self.z_channels = z_channels if not double_z else z_channels * 2
@@ -180,7 +177,6 @@ class Decoder(nn.Module):
 class VQAutoencoder(pl.LightningModule):
     def __init__(
         self,
-        *,
         input_shape,
         n_embed, 
         embed_dim,
@@ -191,7 +187,7 @@ class VQAutoencoder(pl.LightningModule):
         temb_dim        = 128, 
         T               = 64,
         dropout         = 0.0,
-        z_channels, 
+        z_channels      = 2, 
         z_double        = False, 
         tanh            = False,
         use_ema         = False,
@@ -312,11 +308,11 @@ class VQAutoencoder(pl.LightningModule):
         else:
             temb = None
 
-        z_q, z_i, qloss, (_, _, indices) = self.encode(x, temb)
+        z_q, qloss, (_, _, indices) = self.encode(x, temb)
         x = self.decode(z_q, temb)
         if return_indices:
-            return x, z_i, qloss, indices
-        return x, z_i, qloss
+            return x, qloss, indices
+        return x, qloss
 
     def training_step(self, batch, batch_idx):
         # optimizers & schedulers
@@ -326,12 +322,12 @@ class VQAutoencoder(pl.LightningModule):
         x, pos = batch
         x, pos = x.type(torch.float32), pos.type(torch.long)
         
-        x_hat, z_i, qloss, _ = self.forward(x, pos, return_indices=True)
+        x_hat, qloss, _ = self.forward(x, pos, return_indices=True)
 
         ########################
         # Optimize Autoencoder #
         ########################
-        ae_loss, ae_log = self.loss.autoencoder_loss(qloss, x, x_hat, z_i, self.global_step, last_layer=self.decoder.out_conv[-1].weight)
+        ae_loss, ae_log = self.loss.autoencoder_loss(qloss, x, x_hat, self.global_step, last_layer=self.decoder.out_conv[-1].weight)
         ae_opt.zero_grad(set_to_none=True)
         self.manual_backward(ae_loss)
         ae_opt.step()

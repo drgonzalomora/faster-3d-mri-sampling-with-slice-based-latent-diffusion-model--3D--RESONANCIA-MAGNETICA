@@ -1,99 +1,97 @@
 target: first-stage-training # first-stage-training, diffusion-training, inference
 data:
     first_stage:
-        target_shape: [64, 64, 64]
-        n_samples: 500
+        target_shape:   [64, 64, 64]
+        n_samples:      500
         modalities:
         - flair
         - seg
-        binarize: true
-        npy_path: ./data/brats_preprocessed.npy
-        root_path: ../common_data/RSNA_ASNR_MICCAI_BraTS2021_TrainingData_16July2021
-        batch_size: 32
-        shuffle: true
-        num_workers: 6
+        binarize:       true
+        npy_path:       ./data/brats_preprocessed.npy
+        root_path:      ../common_data/RSNA_ASNR_MICCAI_BraTS2021_TrainingData_16July2021
+        batch_size:     32
+        shuffle:        true
+        num_workers:    6
     diffusion:
-        latent_shape: [4, 32, 32]
-        n_samples: 1000
-        to_2d: true
-        root_pat: ./data/brats_preprocessed.npy
-        npy_path: ./data/brats_preprocessed_latents.npy
-        batch_size: 8
-        shuffle: true
-        num_workers: 6
+        latent_shape:   [4, 32, 32]
+        n_samples:      1000
+        to_2d:          true
+        root_pat:       ./data/brats_preprocessed.npy
+        npy_path:       ./data/brats_preprocessed_latents.npy
+        batch_size:     8
+        shuffle:        true
+        num_workers:    6
 unet:
-    image_size: [256, 256] # [64, 32, 32]
-    dims: 2
-    in_channels: 4
-    out_channels: 4
-    model_channels: 128
-    num_res_blocks: 2
-    num_heads: 8
-    num_heads_upsample: -1
-    num_head_channels: -1
-    attention_resolutions: [16, 8]
-    channel_mult: [1, 2, 3, 4, 4]
-    dropout: 0.01
-    class_cond: false
-    use_checkpoint: false
-    use_scale_shift_norm: true
-    resblock_updown: false
-    use_new_attention_order: false
-    conv_resample: true
-    num_classes: # empty
-    f_precision: 32
-    lr: 0.00005
-    weight_decay: 0.0000001
+    image_size:                 [256, 256] # [64, 32, 32]
+    dims:                       2
+    in_channels:                4
+    out_channels:               4
+    model_channels:             128
+    num_res_blocks:             2
+    num_heads:                  8
+    num_heads_upsample:         -1
+    num_head_channels:          -1
+    attention_resolutions:      [16, 8]
+    channel_mult:               [1, 2, 3, 4, 4]
+    dropout:                    0.01
+    class_cond:                 false
+    use_checkpoint:             false
+    use_scale_shift_norm:       true
+    resblock_updown:            false
+    use_new_attention_order:    false
+    conv_resample:              true
+    num_classes:                # empty
+    f_precision:                32
+    lr:                         5.e-05
+    weight_decay:               1.e-07
 autoencoder:
-    target: VQAutoencoder # specifies which autoencoder to use
-    input_shape: [2, 64, 64] # channels, height, width
-    latent_shape: [2, 16, 16] # in_channels * embed_dim, height, width
-    n_embed: 8192
-    embed_dim: 1
-    z_channels: 2
-    z_double: false
-    latent_dim: 16
-    pemb_dim: 128
-    T: 64 # number of slices
-    num_channels: 128
-    channels_mult:
-    - 1
-    - 2
-    - 4
+    target:         VQAutoencoder # specifies which autoencoder to use
+    input_shape:    [2, 64, 64] # channels, height, width
+    n_embed:        8192
+    embed_dim:      2
+    num_channels:   128
+    channels_mult:  [1, 2, 4]
+    attn:           [False, False, True]
     num_res_blocks: 2
-    attn: [False, False, True]
-    learning_rate: 0.00001
+    temb_dim:       128
+    T:              64 
+    dropout:        0.0
+    z_channels:     2
+    z_double:       false
+    tanh:           true
+    use_emas:       false
+    learning_rate:  4.5e-06
     loss:
-        disc_start: 10001
-        codebook_weight: 1.0
-        pixel_weight: 1.0
-        perceptual_weight: 1.0
-        disc_weight: 0.5
+        disc_start:         10001
+        codebook_weight:    1.0
+        pixel_weight:       1.0
+        perceptual_weight:  1.0
+        disc_weight:        0.5
         disc_input_channels: 2
-        disc_channels: 64
-        disc_num_layers: 3
-        disc_factor: 1.0
-        lr_d_factor: 1.0
-        logvar_init: 0.0
-        kl_weight: 0.000001
+        disc_channels:      64
+        disc_num_layers:    3
+        disc_factor:        1.0
+        lr_d_factor:        1.0
+        logvar_init:        0.0
+        kl_weight:          1.0e-05
 diffusion:
-    learn_sigma: false
-    T: 750
-    beta_schedule: cosine
-    model_mean_type: epsilon
-    model_var_type: fixed_small
-    loss_type: mse
-    input_perturbation: 0.1
+    learn_sigma:            false
+    T:                      1000
+    beta_schedule:          cosine
+    model_mean_type:        epsilon
+    model_var_type:         fixed_small
+    loss_type:              mse
+    input_perturbation:     0.1
     timestep_respacing:
-    use_kl: false
-    predict_xstart: false
-    rescale_timesteps: false
+    use_kl:                 false
+    predict_xstart:         false
+    rescale_timesteps:      false
     rescale_learned_sigmas: false
-    schedule_sampler: uniform
-    loss_memory_span: 10
+    schedule_sampler:       uniform
+    loss_memory_span:       10
 callbacks:
     checkpoint:
         monitor: 
-        dirpath: ./checkpoints
-        save_top_k: 1
-        every_n_epochs: 50
+        dirpath:            ./checkpoints
+        save_top_k:         1
+        every_n_epochs:     50

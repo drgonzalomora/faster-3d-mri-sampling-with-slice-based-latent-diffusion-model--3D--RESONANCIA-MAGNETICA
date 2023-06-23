@@ -223,7 +223,7 @@ class VQLPIPSWithDiscriminator(nn.Module):
         disc_weight = disc_weight * self.disc_weight
         return disc_weight
     
-    def autoencoder_loss(self, codebook_loss, x, recon_x, z_i, global_step, last_layer=None, split='train'):
+    def autoencoder_loss(self, codebook_loss, x, recon_x, global_step, last_layer=None, split='train'):
         # l1_loss
         l1_loss = F.l1_loss(recon_x, x, reduction='none') * self.pixel_weight
 
@@ -242,13 +242,6 @@ class VQLPIPSWithDiscriminator(nn.Module):
         disc_weight = torch.tensor(0.0)
         if global_step > self.disc_start and split == 'train':
             disc_weight = self.calculate_adaptive_weight(rec_loss, g_loss, last_layer)
-
-        # cos_sim loss
-        cos_sim = torch.tensor(0.0)
-        if self.cos_weight > 0:
-            B = x.shape[0]
-            z_a, z_b = z_i[0].detach().view(B, -1), z_i[1].detach().view(B, -1)
-            cos_sim = 1 - torch.cosine_similarity(z_a, z_b, dim=1).mean()
             
         # compute total loss
         loss = rec_loss + disc_weight * g_loss + self.codebook_weight * codebook_loss.mean() + cos_sim * self.cos_weight
