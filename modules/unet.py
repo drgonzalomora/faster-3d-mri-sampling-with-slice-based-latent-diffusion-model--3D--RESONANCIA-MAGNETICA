@@ -396,7 +396,7 @@ class QKVAttention(nn.Module):
         return count_flops_attn(model, _x, y)
     
 
-class UNetModel(pl.LightningModule):
+class UNetModel(nn.Module):
     """
     The full UNet model with attention and timestep embedding.
 
@@ -435,9 +435,8 @@ class UNetModel(pl.LightningModule):
         out_channels,
         num_res_blocks,
         attention_resolutions,
-        diffusion: Diffusion,
-        sampler: ScheduleSampler,
         dropout=0,
+        max_period=1000,
         channel_mult=(1, 2, 4, 8),
         conv_resample=True,
         dims=2,
@@ -449,9 +448,7 @@ class UNetModel(pl.LightningModule):
         use_scale_shift_norm=False,
         resblock_updown=False,
         use_new_attention_order=False,
-        f_precision=32,
-        lr=1e-4,
-        weight_decay=1e-6,
+        precision=32,
         **kwargs
     ):
         super().__init__()
@@ -470,15 +467,11 @@ class UNetModel(pl.LightningModule):
         self.conv_resample = conv_resample
         self.num_classes = num_classes
         self.use_checkpoint = use_checkpoint
+        self.max_period = max_period
         self.num_heads = num_heads
         self.num_head_channels = num_head_channels
         self.num_heads_upsample = num_heads_upsample
-        self.f_precision = th.float16 if f_precision == 16 else th.float32
-        self.lr = lr
-        self.weight_decay = weight_decay
-        
-        self.diffusion = diffusion
-        self.sampler = sampler
+        self.precision = th.float32 if precision == 32 else th.float16
         
         time_embed_dim = model_channels * 4
         self.time_embed = nn.Sequential(
@@ -641,59 +634,25 @@ class UNetModel(pl.LightningModule):
             self.num_classes is not None
         ), "must specify y if and only if the model is class-conditional"
 
-        hs = []
-        emb = self.time_embed(timestep_embedding(timesteps, self.model_channels))
+        xs = []
+        emb = self.time_embed(timestep_embedding(timesteps, self.model_channels, max_period=self.max_period))
 
         if self.num_classes is not None:
             assert y.shape == (x.shape[0],)
             emb = emb + self.label_emb(y)
 
-        h = x.type(self.f_precision)
+        x = x.type(self.precision)
         for module in self.input_blocks:
-            h = module(h, emb)
-            hs.append(h)
+            x = module(x, emb)
+            xs.append(x)
             
-        h = self.middle_block(h, emb)
+        x = self.middle_block(x, emb)
         
         for module in self.output_blocks:
-            h = th.cat([h, hs.pop()], dim=1)
-            h = module(h, emb)
+            x = th.cat([x, xs.pop()], dim=1)
+            x = module(x, emb)
             
-        return self.out(h)
-    
-    def configure_optimizers(self):
-        optimizer = th.optim.AdamW(
-            self.parameters(), 
-            lr=self.lr, 
-            weight_decay=self.weight_decay, 
-            betas=(0.5, 0.9)
-        )
-        
-        scheduler = {
-            'scheduler': th.optim.lr_scheduler.CosineAnnealingLR(
-                optimizer, T_max=self.trainer.max_steps, eta_min=1e-9, last_epoch=-1
-            ),
-            'interval': 'step',
-            'frequency': 1
-        }
-        
-        return {"optimizer": optimizer, "lr_scheduler": scheduler}
-    
-    def training_step(self, batch, batch_idx):
-        x_i = batch[0].type(self.f_precision)
-        # B = x_i.shape[0]
-        
-        # forward step
-        times, weights = self.sampler.sample()
-        
-        eps = th.randn_like(x_i)
-        loss = self.diffusion.forward_step(self, x_i, times, noise=eps, weights=weights)
-        
-        # logging loss
-        self.log('mse_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True, sync_dist=True)
-        
-        return loss
-
+        return self.out(x)
 
 class SuperResModel(UNetModel):
     """

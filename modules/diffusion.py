@@ -106,37 +106,14 @@ class Diffusion(nn.Module):
         
         # 1. Processing the variance
         ############################################################
-        # learned variance
-        if self.model_var_type in ['learned', 'learned_range']:
-            assert output.shape[1] == 2 * x_t.shape[1], "model must output mean and variance"
-            output_mean, output_logvar = torch.split(output, x_t.shape[1], dim=1)
-            if self.model_var_type == 'learned':
-                output_variance = torch.exp(output_logvar)
-            else:
-                # taking maximum variance
-                min_logvar = self.extract(self.posterior_log_variance_clipped, t, x_t.shape)
-                max_logvar = torch.log(self.extract(self.betas, t, x_t.shape))
-                # we assume the model output -1, 1 values, we rescale to 0, 1
-                output_logvar = (output_logvar + 1) * 0.5
-                output_variance = torch.exp(output_logvar * max_logvar + (1 - output_logvar) * min_logvar)
-        
-        # fixed variance
-        else:
-            if self.model_var_type == 'fixed_large':
-                output_variance =   self.extract(self.betas, t, x_t.shape) if t > 0 \
-                                    else self.extract(self.posterior_variance, 0, x_t.shape)
-                output_logvar = torch.log(output_variance)
-            elif self.model_var_type == 'fixed_small':
-                output_variance = self.extract(self.posterior_variance, t, x_t.shape)
-                output_logvar = self.extract(self.posterior_log_variance_clipped, t, x_t.shape)
-
+        # TODO
         # 2. Processing the mean
         ############################################################
         if self.model_mean_type == 'epsilon':
             pred_x = self.predict_x_start_from_eps(x_t, t, output)
             if clamp:
                 pred_x = torch.clamp(pred_x, -1, 1)
-            output_mean, _, _ = self.q_posterior_mean_variance(pred_x, x_t, t)
+            output_mean, output_variance, output_logvar = self.q_posterior_mean_variance(pred_x, x_t, t)
 
         else:
             raise NotImplementedError()
@@ -209,32 +186,19 @@ class Diffusion(nn.Module):
             noise = torch.randn_like(x_0)
 
         noise = noise + self.input_perturbation * torch.randn_like(x_0)
-        x_t = self.q_sample(x_0, t, noise=noise).type(model.dtype)
+        x_t = self.q_sample(x_0, t, noise=noise).type(model.precision)
 
         # predict noise
         output = model(x_t, t)
 
-        # var type
-        if self.model_var_type in ['learned', 'learned_large']:
-            assert output.shape[1] == 2 * x_t.shape[1], "model must output mean and variance"
-            model_output, model_variance = torch.split(output, x_t.shape[1], dim=1)
+        # TODO: process var types
 
-            # compute var => vlb term
-            if self.model_var_type == 'learned':
-                pass
-            elif self.model_var_type == 'learned_large':
-                pass
-            else:
-                raise NotImplementedError('Not implemented yet')
-            
-            raise NotImplementedError('Not implemented yet')
-        
         loss = F.mse_loss(output, noise, reduction='none')
+
         if weights is not None:
             loss = loss * weights[(...,) +  (None,) * (loss.ndim - 1)]
-        return loss.mean()
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        return loss.mean().to(dtype=torch.float32)
 
 class SimpleDiffusion(nn.Module):
     def __init__(self, noise_shape, T=1000, beta_schedule='cosine') -> None:
@@ -244,7 +208,7 @@ class SimpleDiffusion(nn.Module):
         self.T = T
         self.betas = self.cosine_beta_schedule(T) if beta_schedule == 'cosine' else self.linear_beta_schedule(T)
         self.alphas = 1 - self.betas
-        self.alphas_hat = torch.cumprod(self.alphas, dim=0).to(device)
+        self.alphas_hat = torch.cumprod(self.alphas, dim=0)
 
     def forward_step(self, module, images, times, noise=None, **kwargs):
         if noise is None:

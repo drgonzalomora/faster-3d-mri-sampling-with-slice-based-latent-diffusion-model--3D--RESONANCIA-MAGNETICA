@@ -9,7 +9,7 @@ data:
         binarize:       true
         npy_path:       ./data/brats_preprocessed.npy
         root_path:      ../common_data/RSNA_ASNR_MICCAI_BraTS2021_TrainingData_16July2021
-        batch_size:     32
+        batch_size:     8
         shuffle:        true
         num_workers:    6
     diffusion:
@@ -22,10 +22,10 @@ data:
         shuffle:        true
         num_workers:    6
 unet:
-    image_size:                 [256, 256] # [64, 32, 32]
+    image_size:                 [128, 128] # [64, 32, 32]
     dims:                       2
-    in_channels:                4
-    out_channels:               4
+    in_channels:                2
+    out_channels:               2
     model_channels:             128
     num_res_blocks:             2
     num_heads:                  8
@@ -33,7 +33,7 @@ unet:
     num_head_channels:          -1
     attention_resolutions:      [16, 8]
     channel_mult:               [1, 2, 3, 4, 4]
-    dropout:                    0.01
+    dropout:                    0.1
     class_cond:                 false
     use_checkpoint:             false
     use_scale_shift_norm:       true
@@ -41,9 +41,7 @@ unet:
     use_new_attention_order:    false
     conv_resample:              true
     num_classes:                # empty
-    f_precision:                32
-    lr:                         5.e-05
-    weight_decay:               1.e-07
+    precision:                  32
 autoencoder:
     target:         VQAutoencoder # specifies which autoencoder to use
     input_shape:    [2, 64, 64] # channels, height, width
@@ -87,7 +85,7 @@ diffusion:
     predict_xstart:         false
     rescale_timesteps:      false
     rescale_learned_sigmas: false
-    schedule_sampler:       uniform
+    schedule_sampler:       loss-aware
     loss_memory_span:       10
 callbacks:
     checkpoint:

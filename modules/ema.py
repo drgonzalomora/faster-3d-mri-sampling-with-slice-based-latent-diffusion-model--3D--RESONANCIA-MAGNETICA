@@ -22,7 +22,7 @@ class LitEma(nn.Module):
 
         self.collected_params = []
 
-    def forward(self,model):
+    def forward(self, model):
         decay = self.decay
 
         if self.num_updates >= 0:

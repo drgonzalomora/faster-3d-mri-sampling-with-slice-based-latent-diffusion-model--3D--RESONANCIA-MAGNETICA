@@ -6,13 +6,11 @@ class ScheduleSampler:
         T,
         batch_size,
         sampler,
-        device,
         **kwargs
     ) -> None:
         assert sampler in ['uniform', 'loss-aware'], "sampler must be either uniform or loss_aware"
         self.T = T
         self.batch_size = batch_size
-        self.device = device
         self.sampler = sampler
 
         # additional states
@@ -20,14 +18,14 @@ class ScheduleSampler:
             self.memory_span = kwargs.get('memory_span', 10)
             self.losses = np.zeros(shape=(T, self.memory_span), dtype=np.float64)
 
-    def sample(self):
+    def sample(self, device):
         """Importance sampling schedule"""
         p = self.weights()
         indices = np.random.choice(self.T, size=self.batch_size, p=p)
         weights = 1 / (self.T * p[indices])
         return (
-            torch.from_numpy(indices).to(self.device, dtype=torch.long), 
-            torch.from_numpy(weights).to(self.device, dtype=torch.float64)
+            torch.from_numpy(indices).to(device, dtype=torch.long), 
+            torch.from_numpy(weights).to(device, dtype=torch.float64)
         )
     
     def weights(self):

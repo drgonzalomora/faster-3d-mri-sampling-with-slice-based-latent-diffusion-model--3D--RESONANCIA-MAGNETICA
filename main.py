@@ -96,12 +96,12 @@ if __name__ == "__main__":
             device=device
         )
 
-        # diffusion = Diffusion(**cfg.diffusion)
-        diffusion = SimpleDiffusion(
-            noise_shape=[4, 256, 256],
-            T=cfg.diffusion.T,
-            beta_schedule='cosine'
-        )
+        diffusion = Diffusion(**cfg.diffusion)
+        # diffusion = SimpleDiffusion(
+        #     noise_shape=[4, 256, 256],
+        #     T=cfg.diffusion.T,
+        #     beta_schedule='cosine'
+        # )
         
         if cfg.unet.use_checkpoint:
             print('Resuming training from checkpoint ... ')

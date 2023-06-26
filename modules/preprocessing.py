@@ -137,14 +137,14 @@ class BRATSDataModule(pl.LightningDataModule):
             pin_memory=True
         )
         
-    def val_dataloader(self):
-        return torch.utils.data.DataLoader(
-            self.test_dataset, 
-            batch_size=self.hparams.batch_size, 
-            shuffle=False, 
-            num_workers=self.hparams.num_workers, 
-            pin_memory=True
-        )
+    # def val_dataloader(self):
+    #     return torch.utils.data.DataLoader(
+    #         self.test_dataset, 
+    #         batch_size=self.hparams.batch_size, 
+    #         shuffle=False, 
+    #         num_workers=self.hparams.num_workers, 
+    #         pin_memory=True
+    #     )
     
 class BRATSLatentsDataModule(pl.LightningDataModule):
     def __init__(self,
