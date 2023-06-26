@@ -61,13 +61,13 @@ if __name__ == "__main__":
         sampler     = sampler,
         use_ema     = False,
         clamp       = True,
-        lr          = 5e-05,
+        lr          = 4.5e-05,
         weight_decay = 1e-07
     )
     
     callbacks = []
     callbacks.append(
-        DDPMImageSampler(n_samples=1, every_n_epochs=10)
+        DDPMImageSampler(n_samples=1, every_n_epochs=5)
     )
     
     callbacks.append(
@@ -80,9 +80,9 @@ if __name__ == "__main__":
     # training
     trainer = pl.Trainer(
         logger=logger,
-        # strategy="ddp",
-        # devices=4,
-        # num_nodes=2,
+        strategy="ddp",
+        devices=4,
+        num_nodes=2,
         accelerator='gpu',
         precision=32,
         max_epochs=200,
