@@ -29,6 +29,7 @@ unet:
     out_channels:               2
     model_channels:             128
     num_res_blocks:             2
+    max_period:                 750
     num_heads:                  8
     num_heads_upsample:         -1
     num_head_channels:          -1
@@ -75,12 +76,12 @@ autoencoder:
         kl_weight:          1.0e-05
 diffusion:
     learn_sigma:            false
-    T:                      1000
+    T:                      750
     beta_schedule:          cosine
     model_mean_type:        epsilon
     model_var_type:         fixed_small
     loss_type:              mse
-    input_perturbation:     0.1
+    input_perturbation:     0.05
     timestep_respacing:
     use_kl:                 false
     predict_xstart:         false
