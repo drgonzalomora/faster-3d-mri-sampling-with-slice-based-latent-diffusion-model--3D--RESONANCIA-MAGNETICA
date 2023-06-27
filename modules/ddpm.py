@@ -49,7 +49,7 @@ class DDPM(pl.LightningModule):
             self.ema(self.model)
 
     def training_step(self, batch, batch_idx):
-        x_i, _ = batch
+        x_i = batch[0]
         x_i = x_i.to(dtype=self.model.precision)
 
         # forward step

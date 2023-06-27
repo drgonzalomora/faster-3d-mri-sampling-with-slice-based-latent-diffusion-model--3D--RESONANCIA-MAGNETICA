@@ -185,8 +185,8 @@ class Diffusion(nn.Module):
         if noise is None:
             noise = torch.randn_like(x_0)
 
-        noise = noise + self.input_perturbation * torch.randn_like(x_0)
-        x_t = self.q_sample(x_0, t, noise=noise).type(model.precision)
+        gamma = noise + self.input_perturbation * torch.randn_like(x_0)
+        x_t = self.q_sample(x_0, t, noise=gamma).type(model.precision)
 
         # predict noise
         output = model(x_t, t)
