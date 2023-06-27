@@ -43,7 +43,7 @@ if __name__ == "__main__":
     )
     
     # data module
-    datamodule = BRATSDataModule(**cfg.data.first_stage)
+    datamodule = BRATSDataModule(**cfg.data.first_stage, slice_idx=32)
     
     sampler = ScheduleSampler(
         T=cfg.diffusion.T,

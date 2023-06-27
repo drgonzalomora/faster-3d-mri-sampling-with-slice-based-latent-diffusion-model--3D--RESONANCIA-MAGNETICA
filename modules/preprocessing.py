@@ -118,18 +118,18 @@ class BRATSDataModule(pl.LightningDataModule):
         train_size = int(self.hparams.train_ratio * self.data.shape[0])
         
         self.train_x = self.data[:train_size]
-        self.train_pos = self.slice_positions[:train_size]
+        # self.train_pos = self.slice_positions[:train_size]
         self.test_x = self.data[train_size:]
-        self.test_pos = self.slice_positions[train_size:]
+        # self.test_pos = self.slice_positions[train_size:]
 
         print('Train shape:', self.train_x.shape) 
         print('Test shape:', self.test_x.shape)
-        print('Train slice positions shape:', self.train_pos.shape)
-        print('Test slice positions shape:', self.test_pos.shape)
+        # print('Train slice positions shape:', self.train_pos.shape)
+        # print('Test slice positions shape:', self.test_pos.shape)
         print('Min: {}, Max: {}'.format(self.data.min(), self.data.max()))
         
-        self.train_dataset = IdentityDataset(self.train_x, self.train_pos)
-        self.test_dataset = IdentityDataset(self.test_x, self.test_pos)
+        self.train_dataset = IdentityDataset(self.train_x)#, self.train_pos)
+        self.test_dataset = IdentityDataset(self.test_x)#, self.test_pos)
 
     def train_dataloader(self):
         return torch.utils.data.DataLoader(
