@@ -17,6 +17,8 @@ class DDPMImageSampler(pl.Callback):
             if (trainer.current_epoch + 1) % self.every_n_epochs == 0:
                 pl_module.eval()
                 samples = pl_module.sample_img(self.n_samples)
+                # -1, 1 -> 0, 1
+                samples = (samples + 1) / 2
 
                 samples = torch.cat([
                     torch.hstack([img for img in samples[:, idx, ...]])

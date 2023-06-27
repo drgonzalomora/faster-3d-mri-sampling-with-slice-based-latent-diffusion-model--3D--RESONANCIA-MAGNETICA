@@ -27,6 +27,7 @@ class BRATSDataModule(pl.LightningDataModule):
         n_samples       = 500,
         modalities      = ['t1', 't1ce', 't2', 'flair', 'seg'],
         binarize        = True,
+        train_ratio     = 0.8,
         npy_path        = '../data/brats_preprocessed.npy',
         root_path       = '../../common_data/RSNA_ASNR_MICCAI_BraTS2021_TrainingData_16July2021',
         batch_size      = 32,
@@ -39,6 +40,8 @@ class BRATSDataModule(pl.LightningDataModule):
         super().__init__()
         self.num_modalities = len(modalities)
         self.prepare_data_per_node = True
+
+        self.slice_idx = kwargs['slice_idx'] if 'slice_idx' in kwargs else None
 
         # just for a faster access
         self.save_hyperparameters()
@@ -95,24 +98,24 @@ class BRATSDataModule(pl.LightningDataModule):
         self.data = torch.from_numpy(np.load(self.hparams.npy_path))
         self.data = self.data[:self.hparams.n_samples]
         
-        # normalize the data [-1, 1]
-        norm = lambda data: data * 2 / data.max() - 1
+        # normalize the data [-1, 1] (min max norm)
+        norm = lambda data: (2 * data - data.min() - data.max()) / (data.max() - data.min())
         for m in range(self.num_modalities):
             for idx in range(self.hparams.n_samples):
                 self.data[idx, m] = norm(self.data[idx, m]).type(torch.float32)
-        self.data.clamp(-1, 1)
 
         self.data = self.data.permute(0, 4, 1, 2, 3) # depth first
+        self.data = self.data[:, self.slice_idx, :, :, :] # slice selection
             
-        # if switching to 2D for autoencoder training
-        D, W, H = self.hparams.target_shape
-        self.data = self.data.reshape(self.hparams.n_samples * D, -1, W, H)
+        # # if switching to 2D for autoencoder training
+        # D, W, H = self.hparams.target_shape
+        # self.data = self.data.reshape(self.hparams.n_samples * D, -1, W, H)
 
-        # keeping track on slice positions for positional embedding
-        self.slice_positions = torch.arange(D)[None, :].repeat(self.hparams.n_samples, 1)
-        self.slice_positions = self.slice_positions.flatten()
+        # # keeping track on slice positions for positional embedding
+        # self.slice_positions = torch.arange(D)[None, :].repeat(self.hparams.n_samples, 1)
+        # self.slice_positions = self.slice_positions.flatten()
         
-        train_size = int(0.85 * self.data.shape[0])
+        train_size = int(self.hparams.train_ratio * self.data.shape[0])
         
         self.train_x = self.data[:train_size]
         self.train_pos = self.slice_positions[:train_size]
@@ -137,15 +140,7 @@ class BRATSDataModule(pl.LightningDataModule):
             pin_memory=True
         )
         
-    # def val_dataloader(self):
-    #     return torch.utils.data.DataLoader(
-    #         self.test_dataset, 
-    #         batch_size=self.hparams.batch_size, 
-    #         shuffle=False, 
-    #         num_workers=self.hparams.num_workers, 
-    #         pin_memory=True
-    #     )
-    
+
 class BRATSLatentsDataModule(pl.LightningDataModule):
     def __init__(self,
         autoencoder,

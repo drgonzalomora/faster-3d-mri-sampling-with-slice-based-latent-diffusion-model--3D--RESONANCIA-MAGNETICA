@@ -3,6 +3,7 @@ data:
     first_stage:
         target_shape:   [64, 128, 128]
         n_samples:      500
+        train_ratio:    1.0
         modalities:
         - flair
         - seg
