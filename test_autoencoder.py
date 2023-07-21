@@ -20,7 +20,14 @@ if __name__ == "__main__":
     print('loading data...')
     dm = BRATSDataModule(**cfg.data.first_stage)
     dm.setup()
-    val_loader = dm.val_dataloader()
+    
+    val_loader = torch.utils.data.DataLoader(
+        dm.val_dataset.dataset, 
+        batch_size=8, 
+        shuffle=True, 
+        num_workers=6, 
+        pin_memory=True
+    )
     
     # loading model
     ae = VQAutoencoder.load_from_checkpoint('./data/autoencoder-VQAutoencoder.ckpt')
