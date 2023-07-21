@@ -211,7 +211,7 @@ class VQAutoencoder(pl.LightningModule):
         self.temb_dim = temb_dim
         if self.temb_dim != None:
             self.positional_encoder = nn.Sequential(
-                TimePositionalEmbedding(dimension=temb_dim, T=max_period, device='cuda'),
+                TimePositionalEmbedding(dimension=temb_dim, T=max_period),
                 nn.Linear(temb_dim, temb_dim * 4),
                 nn.GELU(),
                 nn.Linear(temb_dim * 4, temb_dim)
@@ -315,6 +315,9 @@ class VQAutoencoder(pl.LightningModule):
         if return_indices:
             return x, qloss, indices
         return x, qloss
+    
+    def on_train_start(self) -> None:
+        self.positional_encoder[0].to(self.device)
 
     def training_step(self, batch, batch_idx):
         # optimizers & schedulers

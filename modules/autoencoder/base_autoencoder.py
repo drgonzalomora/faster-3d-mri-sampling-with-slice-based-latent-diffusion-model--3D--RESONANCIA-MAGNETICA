@@ -19,6 +19,10 @@ class TimePositionalEmbedding(nn.Module):
     def forward(self, timestep):
         return self.embedding[timestep]
     
+    def to(self, device):
+        self.embedding = self.embedding.to(device)
+        return self
+    
 class WeightStandardizedConv2d(nn.Conv2d):
     def forward(self, x):
         eps = 1e-5 if x.dtype == torch.float32 else 1e-3
