@@ -20,21 +20,14 @@ if __name__ == "__main__":
     print('loading data...')
     dm = BRATSDataModule(**cfg.data.first_stage)
     dm.setup()
-    
-    val_loader = torch.utils.data.DataLoader(
-        dm.val_dataset.dataset, 
-        batch_size=8, 
-        shuffle=True, 
-        num_workers=6, 
-        pin_memory=True
-    )
+    test_dataloader = dm.test_dataloader()
     
     # loading model
     ae = VQAutoencoder.load_from_checkpoint('./data/autoencoder-VQAutoencoder.ckpt')
 
     # inference
     with torch.no_grad():
-        for i, batch in tqdm(enumerate(val_loader)):
+        for i, batch in tqdm(enumerate(test_dataloader)):
             x, pos = batch
             recon_x, qloss = ae(x, timestep=pos, return_indices=False)
             img_grid = vutils.make_grid(torch.cat([x, recon_x], dim=0), nrow=x.shape[0])
