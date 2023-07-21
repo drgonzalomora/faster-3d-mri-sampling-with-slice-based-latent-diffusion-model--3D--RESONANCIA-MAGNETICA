@@ -5,22 +5,22 @@
 # support@criann.fr
 
 # Time limit for the calculation (48:00:00 max)
-#SBATCH --time 48:00:00
+#SBATCH --time 1:00:00
 
 # Memory to use (here 50Go)
-#SBATCH --mem 100000
+#SBATCH --mem 50000
 
 # Type of gpu to use, either gpu_all, gpu_k80, gpu_p100 or gpu_v100
 #SBATCH --partition gpu_v100
 
 # Number of gpu to use
-#SBATCH --gres gpu:4
+#SBATCH --gres gpu:1
 
 # Number of tasks 
-#SBATCH --ntasks-per-node=4
+#SBATCH --ntasks-per-node=1
 
 # Number of node to use
-#SBATCH --nodes 2
+#SBATCH --nodes 1
 
 # Number of cpu to use
 #SBATCH --cpus-per-task=6
