@@ -228,12 +228,10 @@ class VQLPIPSWithDiscriminator(nn.Module):
         l1_loss = F.l1_loss(recon_x, x, reduction='none') * self.pixel_weight
 
         # perceptual loss
-        if self.perceptual_weight > 0:
-            p_loss = self.lpips(x, recon_x)
-            rec_loss = l1_loss + p_loss * self.perceptual_weight
-
+        p_loss = self.lpips(x, recon_x) * self.perceptual_weight if self.perceptual_weight > 0 else torch.tensor(0.0)
+        
         # recon_loss = l1_loss + p_loss
-        rec_loss = rec_loss.mean()
+        rec_loss = (l1_loss + p_loss).mean()
 
         # discriminator loss
         logits_fake = self.discriminator(recon_x.contiguous())
@@ -244,7 +242,7 @@ class VQLPIPSWithDiscriminator(nn.Module):
             disc_weight = self.calculate_adaptive_weight(rec_loss, g_loss, last_layer)
             
         # compute total loss
-        loss = rec_loss + disc_weight * g_loss + self.codebook_weight * codebook_loss.mean() + cos_sim * self.cos_weight
+        loss = rec_loss + disc_weight * g_loss + self.codebook_weight * codebook_loss.mean()
 
         split = split + '/' if split != 'train' else ''
         log = {
@@ -254,8 +252,7 @@ class VQLPIPSWithDiscriminator(nn.Module):
             "{}p_loss".format(split): p_loss.detach().mean(),
             "{}rec_loss".format(split): rec_loss.detach().mean(),
             "{}disc_weight".format(split): disc_weight.detach(),
-            "{}g_loss".format(split): g_loss.detach().mean(),
-            "{}cos_sim".format(split): cos_sim.detach().mean()
+            "{}g_loss".format(split): g_loss.detach().mean()
         }
         
         return loss, log
