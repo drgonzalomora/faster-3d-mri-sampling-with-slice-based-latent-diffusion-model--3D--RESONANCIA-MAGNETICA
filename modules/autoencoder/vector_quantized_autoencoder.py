@@ -329,7 +329,7 @@ class VQAutoencoder(pl.LightningModule):
         ########################
         # Optimize Autoencoder #
         ########################
-        ae_loss, ae_log = self.loss.autoencoder_loss(qloss, x, x_hat, self.global_step, last_layer=self.decoder.out_conv[-1].weight)
+        ae_loss, ae_log = self.loss.autoencoder_loss(qloss, x, x_hat, self.global_step, last_layer=self.decoder.out_conv[-2].weight)
         ae_opt.zero_grad(set_to_none=True)
         self.manual_backward(ae_loss)
         ae_opt.step()
@@ -360,7 +360,7 @@ class VQAutoencoder(pl.LightningModule):
         
         x_hat, qloss, _ = self.forward(x, pos, return_indices=True)
         _, ae_log = self.loss.autoencoder_loss(
-            qloss, x, x_hat, self.global_step, last_layer=self.decoder.out_conv[-1].weight, split=suffix
+            qloss, x, x_hat, self.global_step, last_layer=self.decoder.out_conv[-2].weight, split=suffix
         )
 
         self.log_dict(ae_log, on_step=False, on_epoch=True, prog_bar=True, logger=True)
