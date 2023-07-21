@@ -112,7 +112,7 @@ class Decoder(nn.Module):
         super().__init__()
 
         self.attn = tuple(reversed(attn)) \
-                    if (attn != None and attn != False and attn != []) else [False] * self.channels_mult.__len__()
+                    if (attn != None and attn != False and attn != []) else [False] * channels_mult.__len__()
 
         self.channels_mult = tuple(reversed(channels_mult)) + (1,)
         self.z_channels = z_channels if not double_z else z_channels * 2
