@@ -2,7 +2,7 @@ target: first-stage-training # first-stage-training, diffusion-training, inferen
 data:
     first_stage:
         target_shape:   [64, 128, 128]
-        n_samples:      1000
+        n_samples:      750
         train_ratio:    0.8
         modalities:
         - flair
@@ -60,6 +60,7 @@ autoencoder:
     z_double:       false
     tanh:           true
     use_emas:       false
+    lr_d_factor:    1.0
     learning_rate:  4.5e-06
     loss:
         disc_start:         10001
@@ -71,7 +72,6 @@ autoencoder:
         disc_channels:      64
         disc_num_layers:    3
         disc_factor:        1.0
-        lr_d_factor:        1.0
         logvar_init:        0.0
         kl_weight:          1.0e-05
 diffusion:

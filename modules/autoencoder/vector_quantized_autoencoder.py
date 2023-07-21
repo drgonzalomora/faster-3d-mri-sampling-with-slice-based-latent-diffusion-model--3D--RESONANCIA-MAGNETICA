@@ -192,6 +192,7 @@ class VQAutoencoder(pl.LightningModule):
         tanh            = False,
         use_ema         = False,
         learning_rate   = 1e-5,
+        lr_d_factor     = 1.0,
         **kwargs
     ) -> None:
         super().__init__()
@@ -201,6 +202,7 @@ class VQAutoencoder(pl.LightningModule):
         self.z_channels = z_channels if not z_double else z_channels * 2
         self.attn = attn if (attn != None and attn != False and attn != []) else [False] * channels_mult.__len__()
         self.learning_rate = learning_rate
+        self.lr_d_factor = lr_d_factor
 
         # perceptual quantizer loss function
         self.loss = VQLPIPSWithDiscriminator(**kwargs['loss'])
