@@ -2,8 +2,8 @@ target: first-stage-training # first-stage-training, diffusion-training, inferen
 data:
     first_stage:
         target_shape:   [64, 128, 128]
-        n_samples:      500
-        train_ratio:    1.0
+        n_samples:      -1
+        train_ratio:    0.8
         modalities:
         - flair
         - seg

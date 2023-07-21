@@ -162,9 +162,7 @@ class BRATSDataModule(pl.LightningDataModule):
         else:
             print('Dataset already exists at {}'.format(self.hparams.npy_path))
         
-    def setup(self, stage='fit'):
-        assert os.path.exists(self.hparams.npy_path), 'npy data file does not exist!'
-        
+    def setup(self, stage='fit'):        
         print('Loading dataset from npy file...')
         self.data = torch.from_numpy(np.load(self.hparams.npy_path))
         self.data = self.data[:self.hparams.n_samples]
@@ -176,35 +174,43 @@ class BRATSDataModule(pl.LightningDataModule):
                 self.data[idx, m] = norm(self.data[idx, m]).type(torch.float32)
 
         self.data = self.data.permute(0, 4, 1, 2, 3) # depth first
-        self.data = self.data[:, self.slice_idx, :, :, :] # slice selection
             
-        # # if switching to 2D for autoencoder training
-        # D, W, H = self.hparams.target_shape
-        # self.data = self.data.reshape(self.hparams.n_samples * D, -1, W, H)
+        # if switching to 2D for autoencoder training
+        D, W, H = self.hparams.target_shape
+        self.data = self.data.reshape(self.hparams.n_samples * D, -1, W, H)
 
-        # # keeping track on slice positions for positional embedding
-        # self.slice_positions = torch.arange(D)[None, :].repeat(self.hparams.n_samples, 1)
-        # self.slice_positions = self.slice_positions.flatten()
+        # keeping track on slice positions for positional embedding
+        self.slice_positions = torch.arange(D)[None, :].repeat(self.hparams.n_samples, 1)
+        self.slice_positions = self.slice_positions.flatten()
         
         train_size = int(self.hparams.train_ratio * self.data.shape[0])
         
         self.train_x = self.data[:train_size]
-        # self.train_pos = self.slice_positions[:train_size]
+        self.train_pos = self.slice_positions[:train_size]
         self.test_x = self.data[train_size:]
-        # self.test_pos = self.slice_positions[train_size:]
+        self.test_pos = self.slice_positions[train_size:]
+        
+        self.train_dataset = IdentityDataset(self.train_x, self.train_pos)
+        self.test_dataset = IdentityDataset(self.test_x, self.test_pos)
 
         print('Train shape:', self.train_x.shape) 
         print('Test shape:', self.test_x.shape)
-        # print('Train slice positions shape:', self.train_pos.shape)
-        # print('Test slice positions shape:', self.test_pos.shape)
+        print('Train slice positions shape:', self.train_pos.shape)
+        print('Test slice positions shape:', self.test_pos.shape)
         print('Min: {}, Max: {}'.format(self.data.min(), self.data.max()))
         
-        self.train_dataset = IdentityDataset(self.train_x)#, self.train_pos)
-        self.test_dataset = IdentityDataset(self.test_x)#, self.test_pos)
-
     def train_dataloader(self):
         return torch.utils.data.DataLoader(
             self.train_dataset, 
+            batch_size=self.hparams.batch_size, 
+            shuffle=self.hparams.shuffle, 
+            num_workers=self.hparams.num_workers, 
+            pin_memory=True
+        )
+    
+    def test_dataloader(self):
+        return torch.utils.data.DataLoader(
+            self.test_dataset, 
             batch_size=self.hparams.batch_size, 
             shuffle=self.hparams.shuffle, 
             num_workers=self.hparams.num_workers, 
