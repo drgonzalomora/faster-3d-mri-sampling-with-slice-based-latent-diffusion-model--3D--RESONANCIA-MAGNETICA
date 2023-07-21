@@ -317,7 +317,7 @@ class VQAutoencoder(pl.LightningModule):
         return x, qloss
     
     def on_train_start(self) -> None:
-        self.positional_encoder[0].to(self.device)
+        self.positional_encoder[0] = self.positional_encoder[0].to(self.device)
 
     def training_step(self, batch, batch_idx):
         # optimizers & schedulers
