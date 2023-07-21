@@ -7,6 +7,7 @@ import glob
 from omegaconf import OmegaConf
 from pytorch_lightning.loggers import wandb as wandb_logger
 from pytorch_lightning.callbacks import ModelCheckpoint
+import shortuuid
 
 from modules.preprocessing import BRATSDataModule, BRATSLatentsDataModule
 from modules.autoencoder.gaussian_autoencoder import GaussianAutoencoder
@@ -41,12 +42,16 @@ if __name__ == "__main__":
     cfg = OmegaConf.load(CONFIG_PATH)
     assert cfg.target in ['first-stage-training', 'diffusion-training', 'inference']
     
+    # generate a unique id for this run
+    run_id = shortuuid.uuid()[:6]
+    
     # logger
     logger = wandb_logger.WandbLogger(
         project='guided-latent-diffusion', 
-        name='{}-{}'.format(
+        name='{}-{}-{}'.format(
             cfg.target,
-            cfg.autoencoder.target
+            cfg.autoencoder.target,
+            run_id
         ),
         # id='24hyhi7b',
         # resume="must"
@@ -68,7 +73,7 @@ if __name__ == "__main__":
         callbacks.append(
             ImageReconstructionLogger(
                 modalities=['FLAIR', 'SEG'],
-                n_samples=5
+                n_samples=10
             )
         )
     
@@ -134,9 +139,10 @@ if __name__ == "__main__":
     callbacks.append(
         ModelCheckpoint(
             **cfg.callbacks.checkpoint,
-            filename='{}-{}'.format(
+            filename='{}-{}-{}'.format(
                 'diffusion' if cfg.target == 'diffusion-training' else 'autoencoder',
-                cfg.autoencoder.target
+                cfg.autoencoder.target,
+                run_id
             )
         )
     )
@@ -144,12 +150,12 @@ if __name__ == "__main__":
     # training
     trainer = pl.Trainer(
         logger=logger,
-        # strategy="ddp",
-        # devices=4,
-        # num_nodes=1,
+        strategy="ddp",
+        devices=4,
+        num_nodes=2,
         accelerator='gpu',
         precision=32,
-        max_epochs=200,
+        max_epochs=300,
         log_every_n_steps=1,
         enable_progress_bar=True,
         callbacks=callbacks

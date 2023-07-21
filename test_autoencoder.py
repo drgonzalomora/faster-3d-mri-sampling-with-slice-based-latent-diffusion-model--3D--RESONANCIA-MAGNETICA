@@ -23,7 +23,7 @@ if __name__ == "__main__":
     test_dataloader = dm.test_dataloader()
     
     # loading model
-    ae = VQAutoencoder.load_from_checkpoint('./data/autoencoder-VQAutoencoder.ckpt')
+    ae = VQAutoencoder.load_from_checkpoint('./checkpoints/autoencoder-VQAutoencoder.ckpt')
 
     # inference
     with torch.no_grad():
@@ -33,3 +33,4 @@ if __name__ == "__main__":
             img_grid = vutils.make_grid(torch.cat([x, recon_x], dim=0), nrow=x.shape[0])
             img = Image.fromarray(img_grid.add(1).mul(127.5).permute(1, 2, 0).cpu().numpy().astype('uint8'))
             img.save(f'samples/sample_{i}.png')
+    

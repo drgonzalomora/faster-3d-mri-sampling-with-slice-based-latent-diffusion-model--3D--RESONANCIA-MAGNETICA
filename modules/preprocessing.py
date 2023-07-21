@@ -95,7 +95,7 @@ class MNIST3DDataModule(pl.LightningDataModule):
 class BRATSDataModule(pl.LightningDataModule):
     def __init__(self,
         target_shape    = (64, 128, 128),
-        n_samples       = 500,
+        n_samples       = 1000,
         modalities      = ['t1', 't1ce', 't2', 'flair', 'seg'],
         binarize        = True,
         train_ratio     = 0.8,

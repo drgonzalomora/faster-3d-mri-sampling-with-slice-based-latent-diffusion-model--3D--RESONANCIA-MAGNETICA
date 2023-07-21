@@ -1,8 +1,8 @@
 target: first-stage-training # first-stage-training, diffusion-training, inference
 data:
     first_stage:
-        target_shape:   [64, 128, 128]
-        n_samples:      500
+        target_shape:   [32, 64, 64]
+        n_samples:      1000
         train_ratio:    0.8
         modalities:
         - flair
@@ -10,7 +10,7 @@ data:
         binarize:       true
         npy_path:       ./data/brats_preprocessed.npy
         root_path:      ../common_data/RSNA_ASNR_MICCAI_BraTS2021_TrainingData_16July2021
-        batch_size:     8
+        batch_size:     16
         shuffle:        true
         num_workers:    6
     diffusion:
@@ -54,8 +54,8 @@ autoencoder:
     attn:           [False, False, True]
     num_res_blocks: 2
     temb_dim:       128
-    max_period:     64 
-    dropout:        0.2
+    max_period:     32 
+    dropout:        0.05
     z_channels:     2
     z_double:       false
     tanh:           true
@@ -66,7 +66,7 @@ autoencoder:
         codebook_weight:    1.0
         pixel_weight:       1.0
         perceptual_weight:  1.0
-        disc_weight:        0.5
+        disc_weight:        1.0
         disc_input_channels: 2
         disc_channels:      64
         disc_num_layers:    3
