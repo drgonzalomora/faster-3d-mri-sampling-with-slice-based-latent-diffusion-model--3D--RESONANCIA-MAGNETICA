@@ -158,6 +158,7 @@ if __name__ == "__main__":
         max_epochs=300,
         log_every_n_steps=1,
         enable_progress_bar=True,
+        num_sanity_val_steps=0,
         callbacks=callbacks
     )
 
