@@ -364,7 +364,7 @@ class VQAutoencoder(pl.LightningModule):
         self.log_dict(ae_log, on_step=False, on_epoch=True, prog_bar=True, logger=True)
     
     def configure_optimizers(self):
-        ae_opt = torch.optim.AdamW(list(self.encoders.parameters()) + 
+        ae_opt = torch.optim.AdamW(list(self.encoder.parameters()) + 
                                    list(self.decoder.parameters()) + 
                                    list(self.positional_encoder.parameters()) +
                                    list(self.quant_conv.parameters()) +
