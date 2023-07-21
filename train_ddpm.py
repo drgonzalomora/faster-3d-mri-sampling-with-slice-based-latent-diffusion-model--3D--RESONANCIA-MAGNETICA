@@ -34,7 +34,6 @@ if __name__ == "__main__":
         raise FileNotFoundError('Config file not found')
     
     cfg = OmegaConf.load(CONFIG_PATH)
-    assert cfg.target in ['first-stage-training', 'diffusion-training', 'inference']
     
     # logger
     logger = wandb_logger.WandbLogger(

@@ -1,17 +1,11 @@
 from abc import abstractmethod
 
 import math
-from typing import Any
 
 import numpy as np
-from pytorch_lightning.utilities.types import STEP_OUTPUT
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
-import pytorch_lightning as pl
-
-from .diffusion import Diffusion
-from .sampler import ScheduleSampler
 
 from .nn import (
     checkpoint,

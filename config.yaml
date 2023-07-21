@@ -2,7 +2,7 @@ target: first-stage-training # first-stage-training, diffusion-training, inferen
 data:
     first_stage:
         target_shape:   [64, 128, 128]
-        n_samples:      1000
+        n_samples:      500
         train_ratio:    1.0
         modalities:
         - flair
@@ -15,7 +15,7 @@ data:
         num_workers:    6
     diffusion:
         latent_shape:   [4, 32, 32]
-        n_samples:      1000
+        n_samples:      500
         to_2d:          true
         root_pat:       ./data/brats_preprocessed.npy
         npy_path:       ./data/brats_preprocessed_latents.npy
@@ -29,7 +29,7 @@ unet:
     out_channels:               2
     model_channels:             128
     num_res_blocks:             2
-    max_period:                 750
+    max_period:                 1000
     num_heads:                  8
     num_heads_upsample:         -1
     num_head_channels:          -1
@@ -54,8 +54,8 @@ autoencoder:
     attn:           [False, False, True]
     num_res_blocks: 2
     temb_dim:       128
-    T:              64 
-    dropout:        0.0
+    max_period:     64 
+    dropout:        0.2
     z_channels:     2
     z_double:       false
     tanh:           true
@@ -76,18 +76,18 @@ autoencoder:
         kl_weight:          1.0e-05
 diffusion:
     learn_sigma:            false
-    T:                      750
+    T:                      1000
     beta_schedule:          cosine
     model_mean_type:        epsilon
     model_var_type:         fixed_small
     loss_type:              mse
-    input_perturbation:     0.05
+    input_perturbation:     0.1
     timestep_respacing:
     use_kl:                 false
     predict_xstart:         false
     rescale_timesteps:      false
     rescale_learned_sigmas: false
-    schedule_sampler:       loss-aware
+    schedule_sampler:       uniform # not sure of loss-aware works well
     loss_memory_span:       10
 callbacks:
     checkpoint:

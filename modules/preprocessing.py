@@ -20,6 +20,77 @@ class IdentityDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         return [d[index] for d in self.data]
+    
+class MNIST3DDataModule(pl.LightningDataModule):
+    def __init__(
+        self, 
+        npy_path, 
+        train_size=0.8,
+        batch_size=32,
+        shuffle=True,
+        num_workers=6,
+        **kwargs
+    ) -> None:
+        super().__init__()
+        self.npy_path = npy_path
+        self.train_size = train_size
+        self.save_hyperparameters()
+
+    def prepare_data(self) -> None:
+        return super().prepare_data()
+    
+    def setup(self, stage: str = 'train') -> None:
+        assert os.path.exists(self.npy_path), 'Numpy file not found!'
+        
+        self.data = np.load(self.npy_path)
+        self.x, self.y = self.data['x'], self.data['y']
+
+        # renorm from [0, 1] to [-1, 1]
+        self.x = (self.x - 0.5) * 2
+        self.x = torch.from_numpy(self.x).unsqueeze(1)
+
+        # depth first
+        self.x = self.x.permute(0, 2, 1, 3, 4)
+
+        # to slice-based data
+        B, D, C, H, W = self.x.shape
+        self.x = self.x.reshape(B * D, C, H, W)
+
+        # keeping track on slice positions for positional embedding
+        self.slice_positions = torch.arange(D)[None, :].repeat(B, 1)
+        self.slice_positions = self.slice_positions.flatten()
+
+        # train-val split
+        train_size = int(self.train_size * self.x.shape[0])
+        self.train_x, self.train_pos = self.x[:train_size], self.slice_positions[:train_size]
+        self.val_x, self.val_pos = self.x[train_size:], self.slice_positions[train_size:]
+
+        # datasets
+        self.train_dataset = IdentityDataset(self.train_x, self.train_pos)
+        self.val_dataset = IdentityDataset(self.val_x, self.val_pos)
+
+        print('Train dataset size: {}'.format(len(self.train_dataset)))
+        print('Val dataset size: {}'.format(len(self.val_dataset)))
+        print('Data shape: {}'.format(self.train_x.shape))
+
+    def train_dataloader(self) -> torch.utils.data.DataLoader:
+        return torch.utils.data.DataLoader(
+            self.train_dataset,
+            batch_size=self.hparams.batch_size,
+            shuffle=self.hparams.shuffle,
+            num_workers=self.hparams.num_workers,
+            pin_memory=True
+        )
+    
+    def val_dataloader(self) -> torch.utils.data.DataLoader:
+        return torch.utils.data.DataLoader(
+            self.val_dataset,
+            batch_size=self.hparams.batch_size,
+            shuffle=self.hparams.shuffle,
+            num_workers=self.hparams.num_workers,
+            pin_memory=True
+        )
+
 
 class BRATSDataModule(pl.LightningDataModule):
     def __init__(self,
@@ -140,7 +211,6 @@ class BRATSDataModule(pl.LightningDataModule):
             pin_memory=True
         )
         
-
 class BRATSLatentsDataModule(pl.LightningDataModule):
     def __init__(self,
         autoencoder,

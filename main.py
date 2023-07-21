@@ -13,7 +13,7 @@ from modules.autoencoder.gaussian_autoencoder import GaussianAutoencoder
 from modules.autoencoder.vector_quantized_autoencoder import VQAutoencoder
 from modules.loggers import ImageReconstructionLogger, ImageGenerationLogger
 from modules.unet import UNetModel
-from modules.diffusion import Diffusion, SimpleDiffusion
+from modules.diffusion import Diffusion
 from modules.sampler import ScheduleSampler
 
 os.environ['WANDB_API_KEY'] = 'bdc8857f9d6f7010cff35bcdc0ae9413e05c75e1'

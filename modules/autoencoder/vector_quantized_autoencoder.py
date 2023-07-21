@@ -185,7 +185,7 @@ class VQAutoencoder(pl.LightningModule):
         num_res_blocks  = 2, 
         attn            = None,
         temb_dim        = 128, 
-        T               = 64,
+        max_period      = 64,
         dropout         = 0.0,
         z_channels      = 2, 
         z_double        = False, 
@@ -209,7 +209,7 @@ class VQAutoencoder(pl.LightningModule):
         self.temb_dim = temb_dim
         if self.temb_dim != None:
             self.positional_encoder = nn.Sequential(
-                TimePositionalEmbedding(dimension=temb_dim, T=T, device='cuda'),
+                TimePositionalEmbedding(dimension=temb_dim, T=max_period, device='cuda'),
                 nn.Linear(temb_dim, temb_dim * 4),
                 nn.GELU(),
                 nn.Linear(temb_dim * 4, temb_dim)
