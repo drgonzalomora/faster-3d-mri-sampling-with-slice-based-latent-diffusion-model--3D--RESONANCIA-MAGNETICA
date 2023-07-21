@@ -35,6 +35,7 @@ pip install pytorch-lightning --user
 pip install nibabel --user
 pip install wandb --user
 pip install omegaconf --user
+pip install shortuuid --user
 
 # Start the calculation (safer to use srun)
 srun python3 $1
